@@ -49,7 +49,7 @@ const App = () => {
             <a
               target="_blank"
               rel="noreferrer"
-              href={`https://github.com/DOBEN`}
+              href={`https://github.com/DOBEN/ContractCompanion`}
             >
               Github
             </a>
