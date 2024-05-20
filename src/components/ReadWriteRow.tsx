@@ -7,6 +7,7 @@ import PulseLoader from "react-spinners/PulseLoader";
 import { BrowserProvider, ethers } from "ethers";
 
 import { TxHashLink } from "./EtherScanTxLink";
+import { decodeReturnParameterTypes } from "./DecodeReturnValue";
 
 interface Props {
   functionHash: string;
@@ -83,9 +84,10 @@ export function ReadWriteRow(props: Props) {
     returnParameterType: string;
     shouldWrite: boolean;
   };
-  const { control, register, formState, handleSubmit } = useForm<FormType>({
-    mode: "all",
-  });
+  const { control, register, setValue, formState, handleSubmit } =
+    useForm<FormType>({
+      mode: "all",
+    });
 
   const [shouldWrite, inputParameter, returnParameterType] = useWatch({
     control: control,
@@ -177,6 +179,8 @@ export function ReadWriteRow(props: Props) {
 
     setWaiting(true);
 
+    let returnValueRawBytes;
+
     // Call contract
     try {
       let inputParameterABIEncoded = parseInputParameter(
@@ -192,7 +196,7 @@ export function ReadWriteRow(props: Props) {
           (inputParameterABIEncoded ? inputParameterABIEncoded : ""),
       };
 
-      let returnValueRawBytes = await provider.call(transaction);
+      returnValueRawBytes = await provider.call(transaction);
       setRawByteReturnValue(returnValueRawBytes);
 
       // If returnParameterTypes are provided, parse the return parameter.
@@ -212,6 +216,23 @@ export function ReadWriteRow(props: Props) {
       setError((e as Error).message);
     } finally {
       setWaiting(false);
+    }
+
+    // Try to decode the return parameter types.
+    if (returnValueRawBytes) {
+      let decodedReturnValueTypes =
+        decodeReturnParameterTypes(returnValueRawBytes);
+      if (decodedReturnValueTypes) {
+        let types = decodedReturnValueTypes
+          .map((item) => `"${item}"`)
+          .join(", ");
+
+        console.log(types);
+        setValue("returnParameterType", "[" + types + "]");
+      } else {
+        // TODO: improve on the decoding; proper error display once decoding is reliable
+        console.log("Could not derive return parameter types");
+      }
     }
   }
 

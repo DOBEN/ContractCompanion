@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "lint": "eslint",
+    "lint": "eslint .",
     "fmt-check": "prettier --check .",
     "fmt": "prettier --write .",
     "preview": "vite preview"
