@@ -61,14 +61,14 @@ export function MainCard(props: Props) {
       );
     }
 
-    let list = functionSelectors(bytecode);
+    const list = functionSelectors(bytecode);
 
-    let interfaces: FunctionInterface[] = [];
+    const interfaces: FunctionInterface[] = [];
 
     for (let i = 0; i < list.length; i++) {
       const argumentsString = functionArguments(bytecode, list[i]);
 
-      let inputParameters: string[] =
+      const inputParameters: string[] =
         argumentsString.trim() === ""
           ? []
           : Array.from(
@@ -89,7 +89,7 @@ export function MainCard(props: Props) {
 
   useEffect(() => {
     async function fetchFunctionInterfacesFromDatabase() {
-      let temp_functionInterfaces = functionInterfaces;
+      const temp_functionInterfaces = functionInterfaces;
       const urls = functionInterfaces.map(
         (item) =>
           `https://www.4byte.directory/api/v1/signatures/?hex_signature=${item.functionHash.slice(2)}`,
@@ -112,7 +112,7 @@ export function MainCard(props: Props) {
           const abi = await response.json();
 
           for (let j = 0; j < abi.results.length; j++) {
-            let sig = abi.results[j].text_signature;
+            const sig = abi.results[j].text_signature;
             temp_functionInterfaces[position].databaseLookUpArray.push(
               abi.results[j].text_signature,
             );

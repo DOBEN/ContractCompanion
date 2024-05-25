@@ -43,7 +43,7 @@ const App = () => {
           <div className="secondary">
             <img
               src={GithubPicture}
-              alt="Github Picture"
+              alt="Github"
               style={{ maxWidth: "40px", height: "40px" }}
             />
             <a
@@ -57,7 +57,7 @@ const App = () => {
           <div className="secondary">
             <img
               src={LinkedInPicture}
-              alt="LinkedIn Picture"
+              alt="LinkedIn"
               style={{ maxWidth: "40px", height: "40px" }}
             />
             <a
@@ -71,7 +71,7 @@ const App = () => {
           <div className="secondary">
             <img
               src={EmailPicture}
-              alt="Email Picture"
+              alt="Email"
               style={{ maxWidth: "38px", height: "38px", padding: "5px" }}
             />
             doris_benda&#123;at&#125;web3achiever.com

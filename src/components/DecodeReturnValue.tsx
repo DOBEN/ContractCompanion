@@ -19,13 +19,13 @@ export function decodeReturnParameterTypes(
   returnValueHexStringLong: string,
 ): string[] {
   // Remove '0x'
-  let returnValueHexString = returnValueHexStringLong.slice(2);
-  let potentialTypes: string[] = [];
+  const returnValueHexString = returnValueHexStringLong.slice(2);
+  const potentialTypes: string[] = [];
 
   const wordSize = 64; // 32 bytes = 64 hex characters
 
   // Ethereum words are 32 bytes long.
-  let returnValueWords = [];
+  const returnValueWords = [];
   for (let i = 0; i < returnValueHexString.length; i += wordSize) {
     returnValueWords.push(returnValueHexString.slice(i, i + wordSize));
   }
@@ -38,7 +38,7 @@ export function decodeReturnParameterTypes(
       wordIndex += 1;
       continue;
     }
-    let word = returnValueWords[wordIndex];
+    const word = returnValueWords[wordIndex];
 
     let result: DecodedType;
     try {
@@ -50,9 +50,11 @@ export function decodeReturnParameterTypes(
 
       wordIndex += 1;
       continue;
-    } catch (e) {}
+    } catch (e) {
+      // If the first word is not a dynamic ABI encoded type, continue with trying to decode it as a single word
+    }
 
-    let typeCharacteristics = performHeuristic(word);
+    const typeCharacteristics = performHeuristic(word);
 
     if (typeCharacteristics.types.length > 0) {
       potentialTypes.push(typeCharacteristics.types[0]);
@@ -73,7 +75,7 @@ export function processAndValidateWord(
   word: string,
   returnValueWords: string[],
 ) {
-  let hexWord = Number(`0x${word}`);
+  const hexWord = Number(`0x${word}`);
 
   // If the word is a multiple of 32, it may be an offset pointing to the start of an ABI-encoded item
   if (hexWord % Number(32) != 0 || hexWord == 0) {
@@ -84,7 +86,7 @@ export function processAndValidateWord(
   }
 
   // Check if the pointer is pointing to a valid location in the returnValue
-  let wordOffset = hexWord / 32;
+  const wordOffset = hexWord / 32;
   if (wordOffset >= returnValueWords.length) {
     console.error(
       `parameter ${wordIndex}: ${word} is out of bounds (offset check)`,
@@ -101,9 +103,9 @@ export function tryDecodeDynamicParameter(
 ): DecodedType {
   // Initialize a `Set` called `wordCoverages` with the `index` of the current word.
   // We keep track of which words we've covered while attempting to ABI-decode the current word
-  let wordCoverages = new Set([wordIndex]);
+  const wordCoverages = new Set([wordIndex]);
 
-  let word = returnValueWords[wordIndex];
+  const word = returnValueWords[wordIndex];
 
   // (1) The first validation step.
   // This checks if the current word could be a valid
@@ -121,7 +123,7 @@ export function tryDecodeDynamicParameter(
   // Note: `sizeOfType` is the size of the ABI-encoded item. It varies depending on the type of the
   // item. For example, the size of a `bytes` is the number of bytes in the encoded data, while
   // for a dynamic-length array, the size is the number of elements in the array.
-  let sizeOfType = Number(returnValueWords[wordOffset]);
+  const sizeOfType = Number(returnValueWords[wordOffset]);
 
   // (3) The third validation step.
   // Add the size word index to `wordCoverages`, since this word is part of the ABI-encoded
@@ -133,8 +135,8 @@ export function tryDecodeDynamicParameter(
   // If there aren't, it doesn't necessarily mean that the returnValue is invalid, but it does
   // indicate that this type cannot be an array, since there aren't enough words left to store
   // the array elements. In that case, we first try to decode the value as bytes.
-  let dataStartWordOffset = wordOffset + 1;
-  let dataEndWordOffset = dataStartWordOffset + sizeOfType - 1;
+  const dataStartWordOffset = wordOffset + 1;
+  const dataEndWordOffset = dataStartWordOffset + sizeOfType - 1;
 
   if (dataEndWordOffset > returnValueWords.length) {
     // Type cannot be an array
@@ -175,7 +177,7 @@ export function tryDecodeDynamicParameterAsArray(
 
   // (1) Get all words from `dataStartWordOffset` to `dataEndWordOffset`.
   // This is where the encoded data may be stored.
-  let dataWords = returnValueWords.slice(
+  const dataWords = returnValueWords.slice(
     dataStartWordOffset,
     dataEndWordOffset,
   );
@@ -211,7 +213,7 @@ export function tryDecodeDynamicParameterAsArray(
   //         - if it is a dynamic type, we know the type of the array elements and can return it
   //         - if it is a static type, find the potential types that can represent each element in
   //           the array
-  let potentialType = getPotentialType(
+  const potentialType = getPotentialType(
     dataWords,
     wordIndex,
     returnValueWords,
@@ -237,7 +239,7 @@ export function tryDecodeDynamicParameterAsBytes(
 
   // (1) Get all the words from `dataStartWordOffset` to the end of `returnValueWords`.
   // This is where the encoded data may be stored.
-  let dataWords = returnValueWords.slice(dataStartWordOffset);
+  const dataWords = returnValueWords.slice(dataStartWordOffset);
 
   // (2) Perform a quick validation check to see if there are enough remaining bytes
   // to contain the ABI-encoded item. If there aren't, return an `BytesCheckOutOfBounds` error.
@@ -249,8 +251,8 @@ export function tryDecodeDynamicParameterAsBytes(
   }
 
   // (3) Calculate how many words are needed to store the encoded data with size `sizeOfType`.
-  let wordCountForSize = Math.ceil(sizeOfType / 32);
-  let dataEndWordOffset = dataStartWordOffset + wordCountForSize;
+  const wordCountForSize = Math.ceil(sizeOfType / 32);
+  const dataEndWordOffset = dataStartWordOffset + wordCountForSize;
   console.log(`with data: ${dataWords.concat()}`);
 
   // (4) Perform a quick validation check to see if there are enough remaining bytes
@@ -264,13 +266,13 @@ export function tryDecodeDynamicParameterAsBytes(
 
   // (5) Get the last word in `dataWords`, so we can perform a size check. There should be
   // `sizeOfType % 32` bytes in this word, and the rest should be null bytes.
-  let lastWord = dataWords[wordCountForSize];
-  let lastWordSize = sizeOfType % 32;
+  const lastWord = dataWords[wordCountForSize];
+  const lastWordSize = sizeOfType % 32;
 
   // If the padding size of this last word is greater than `32 - lastWordSize`,
   // there are too many bytes in the last word, and this is not a valid ABI-encoded type.
   // return an `PaddingCheckFailed` error.
-  let paddingSize = getPaddingSize(lastWord);
+  const paddingSize = getPaddingSize(lastWord);
   if (paddingSize > 32 - lastWordSize) {
     console.error(
       `parameter ${wordIndex}: '${word}' with size ${sizeOfType} cannot fit into last word with padding of ${paddingSize} bytes (bytes)`,
@@ -295,14 +297,14 @@ export function getPotentialType(
   word: string,
   dataStartWordOffset: number,
   wordCoverages: Set<number>,
-): String {
-  let allTypeCharacteristics: TypeCharacteristics[] = [];
+): string {
+  const allTypeCharacteristics: TypeCharacteristics[] = [];
 
   dataWords.forEach((currentWord, i) => {
     // We need to get a slice of returnValueWords from `dataStartWordOffset` to the end
     // of the returnValueWords. this is because nested abi-encoded items
     // reset the offsets of the words.
-    let dataWords = returnValueWords.slice(dataStartWordOffset);
+    const dataWords = returnValueWords.slice(dataStartWordOffset);
 
     // First, check if this word *could* be a nested abi-encoded item
     console.log(
@@ -310,11 +312,11 @@ export function getPotentialType(
     );
 
     try {
-      let potentialType = tryDecodeDynamicParameter(i, dataWords);
+      const potentialType = tryDecodeDynamicParameter(i, dataWords);
 
       // We need to add dataStartWordOffset to all the offsets in nestedCoverages
       // because they are relative to the start of the nested abi-encoded item.
-      let nestedCoverages = Array.from(potentialType.coverages).map(
+      const nestedCoverages = Array.from(potentialType.coverages).map(
         (x) => x + dataStartWordOffset,
       );
 
@@ -331,12 +333,12 @@ export function getPotentialType(
       // Type is not a nested dynamic type. Continue with the rest of the function.
     }
 
-    let typeCharacteristics = performHeuristic(currentWord);
+    const typeCharacteristics = performHeuristic(currentWord);
 
     allTypeCharacteristics.push(typeCharacteristics);
   });
 
-  let result = allTypeCharacteristics.reduce(
+  const result = allTypeCharacteristics.reduce(
     (
       [potentialType, maxSize]: [string, number],
       { types, typeSize }: TypeCharacteristics,
@@ -363,13 +365,13 @@ export function getPotentialType(
 }
 
 export function performHeuristic(word: string): TypeCharacteristics {
-  let typeCharacteristics = getPotentialTypesForWord(word);
+  const typeCharacteristics = getPotentialTypesForWord(word);
 
   // Perform heuristics
   // - if we use right-padding, this is probably bytesN
   // - if we use left-padding, this is probably uintN or intN or address or bool
   // - if we use no padding, this is probably bytes32
-  let padding = getPadding(hexStringToBytes(word));
+  const padding = getPadding(hexStringToBytes(word));
 
   switch (padding.type) {
     case "Left": {

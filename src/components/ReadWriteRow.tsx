@@ -31,12 +31,12 @@ function parseInputParameter(
   }
 
   try {
-    let abiCoder = new ethers.AbiCoder();
+    const abiCoder = new ethers.AbiCoder();
 
     // Parse the valid JSON string into arrays
     const inputParameterArray = JSON.parse(inputParameter);
 
-    let inputParameterABIEncoded = abiCoder
+    const inputParameterABIEncoded = abiCoder
       .encode(inputParameterTypeArray, inputParameterArray)
       .slice(2);
 
@@ -52,12 +52,12 @@ function parseReturnParameter(
   returnValueRawBytes: string,
 ) {
   try {
-    let abiCoder = new ethers.AbiCoder();
+    const abiCoder = new ethers.AbiCoder();
 
     // Parse the valid JSON string into arrays
     const returnParameterTypeArray = JSON.parse(returnParameterType);
 
-    let returnParameterABIDecoded = abiCoder.decode(
+    const returnParameterABIDecoded = abiCoder.decode(
       returnParameterTypeArray,
       returnValueRawBytes,
     );
@@ -128,13 +128,13 @@ export function ReadWriteRow(props: Props) {
     setWaiting(true);
 
     try {
-      let inputParameterABIEncoded = parseInputParameter(
+      const inputParameterABIEncoded = parseInputParameter(
         inputParameter,
         inputParameterTypeArray,
       );
 
       // Create transaction
-      let transaction = {
+      const transaction = {
         to: contractAddress,
         data:
           functionHash +
@@ -144,7 +144,7 @@ export function ReadWriteRow(props: Props) {
       const signer = await provider.getSigner();
       const txResponse = await signer.sendTransaction(transaction);
 
-      let txHash = txResponse.hash;
+      const txHash = txResponse.hash;
 
       await provider.waitForTransaction(txHash);
 
@@ -183,13 +183,13 @@ export function ReadWriteRow(props: Props) {
 
     // Call contract
     try {
-      let inputParameterABIEncoded = parseInputParameter(
+      const inputParameterABIEncoded = parseInputParameter(
         inputParameter,
         inputParameterTypeArray,
       );
 
       // Create transaction
-      let transaction = {
+      const transaction = {
         to: contractAddress,
         data:
           functionHash +
@@ -201,7 +201,7 @@ export function ReadWriteRow(props: Props) {
 
       // If returnParameterTypes are provided, parse the return parameter.
       if (returnParameterType) {
-        let parsedReturnValue = parseReturnParameter(
+        const parsedReturnValue = parseReturnParameter(
           returnParameterType,
           returnValueRawBytes,
         );
@@ -220,10 +220,10 @@ export function ReadWriteRow(props: Props) {
 
     // Try to decode the return parameter types.
     if (returnValueRawBytes) {
-      let decodedReturnValueTypes =
+      const decodedReturnValueTypes =
         decodeReturnParameterTypes(returnValueRawBytes);
       if (decodedReturnValueTypes) {
-        let types = decodedReturnValueTypes
+        const types = decodedReturnValueTypes
           .map((item) => `"${item}"`)
           .join(", ");
 
