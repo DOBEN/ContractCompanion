@@ -13,6 +13,33 @@ import { MainCard } from "./components/MainCard";
 
 import "./styles.scss";
 
+const SEPOLIA_CHAIN_ID = 11155111n;
+
+interface MetamaskError extends Error {
+  code: number;
+}
+
+async function switchToSepolia() {
+  try {
+    await window.ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: "0x" + SEPOLIA_CHAIN_ID.toString(16) }],
+    });
+    console.log("Switched to Sepolia network");
+  } catch (switchError) {
+    if ((switchError as MetamaskError).code === 4902) {
+      throw new Error(
+        "Sepolia network is not available in your Metamask, please enable testnets in your Metamask or add the Sepolia testnet manually",
+      );
+    } else {
+      throw new Error(
+        "Failed to switch to the Sepolia network: " +
+          (switchError as Error).message,
+      );
+    }
+  }
+}
+
 const App = () => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
@@ -25,7 +52,18 @@ const App = () => {
   const connectWalletHandler = async () => {
     if (window.ethereum) {
       setErrorMessage(undefined);
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      let provider = new ethers.BrowserProvider(window.ethereum);
+
+      if ((await provider.getNetwork()).chainId != SEPOLIA_CHAIN_ID) {
+        try {
+          await switchToSepolia();
+          provider = new ethers.BrowserProvider(window.ethereum);
+        } catch (e) {
+          setErrorMessage((e as Error).message);
+          return;
+        }
+      }
+
       const accounts = await provider.send("eth_requestAccounts", []);
       const account = accounts[0];
       setProvider(provider);

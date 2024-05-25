@@ -1,8 +1,8 @@
-import { TypeCharacteristics } from "./DecodeReturnValue";
+import { TypeCharacteristics } from "./decode";
 
 type Padding = { type: "None" } | { type: "Left" } | { type: "Right" };
 
-// Get minimum size needed to store the given word
+// Get potential types that this word could represent.
 export function getPotentialTypesForWord(word: string): TypeCharacteristics {
   // Get padding of the word, note this is a maximum.
   const paddingSize = getPaddingSize(word);

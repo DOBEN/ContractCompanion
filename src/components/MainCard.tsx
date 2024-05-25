@@ -233,15 +233,6 @@ export function MainCard(props: Props) {
 
         {functionInterfaces.length !== 0 && (
           <>
-            {provider === undefined && (
-              <>
-                <br />
-                <Alert variant="info">
-                  Connect your browser wallet to interact with the contact
-                  below.
-                </Alert>
-              </>
-            )}
             {functionInterfaces.map((element, position) => {
               return (
                 <ReadWriteRow

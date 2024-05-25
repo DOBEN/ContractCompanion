@@ -7,7 +7,7 @@ import PulseLoader from "react-spinners/PulseLoader";
 import { BrowserProvider, ethers } from "ethers";
 
 import { TxHashLink } from "./EtherScanTxLink";
-import { decodeReturnParameterTypes } from "./DecodeReturnValue";
+import { decodeReturnParameterTypes } from "../decodeReturnParameterTypes/decode";
 
 interface Props {
   functionHash: string;
@@ -122,7 +122,7 @@ export function ReadWriteRow(props: Props) {
 
     if (provider === undefined) {
       setError(`Connect Your Browser Wallet`);
-      throw Error(`'provider' input field is undefined`);
+      throw Error(`Connect Your Browser Wallet`);
     }
 
     setWaiting(true);
@@ -174,7 +174,7 @@ export function ReadWriteRow(props: Props) {
 
     if (provider === undefined) {
       setError(`Connect Your Browser Wallet`);
-      throw Error(`'provider' input field is undefined`);
+      throw Error(`Connect Your Browser Wallet`);
     }
 
     setWaiting(true);
