@@ -16,6 +16,9 @@ interface Props {
   databaseLookUpArray: string[];
   perfectMatchName: string | undefined;
   inputParameterTypeArray: string[];
+  proxyAddress: string | undefined;
+  valueInWEI: number | undefined;
+  gasLimit: number | undefined;
 }
 
 function parseInputParameter(
@@ -77,6 +80,9 @@ export function ReadWriteRow(props: Props) {
     perfectMatchName,
     inputParameterTypeArray,
     databaseLookUpArray,
+    valueInWEI,
+    gasLimit,
+    proxyAddress,
   } = props;
 
   type FormType = {
@@ -135,10 +141,13 @@ export function ReadWriteRow(props: Props) {
 
       // Create transaction
       const transaction = {
-        to: contractAddress,
+        // If `proxyAddress` is set, we send the request to the proxy instead of the `contractAddress`.
+        to: proxyAddress ? proxyAddress : contractAddress,
         data:
           functionHash +
           (inputParameterABIEncoded ? inputParameterABIEncoded : ""),
+        value: valueInWEI ? valueInWEI : 0,
+        gasLimit: gasLimit ? gasLimit : 0,
       };
 
       const signer = await provider.getSigner();
@@ -190,7 +199,7 @@ export function ReadWriteRow(props: Props) {
 
       // Create transaction
       const transaction = {
-        to: contractAddress,
+        to: proxyAddress ? proxyAddress : contractAddress,
         data:
           functionHash +
           (inputParameterABIEncoded ? inputParameterABIEncoded : ""),

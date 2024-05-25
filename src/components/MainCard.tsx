@@ -25,14 +25,17 @@ export function MainCard(props: Props) {
 
   type FormType = {
     contractAddress: string | undefined;
+    proxyAddress: string | undefined;
+    valueInWEI: number | undefined;
+    gasLimit: number | undefined;
   };
   const { control, register, formState, handleSubmit } = useForm<FormType>({
     mode: "all",
   });
 
-  const [contractAddress] = useWatch({
+  const [contractAddress, proxyAddress, valueInWEI, gasLimit] = useWatch({
     control: control,
-    name: ["contractAddress"],
+    name: ["contractAddress", "proxyAddress", "valueInWEI", "gasLimit"],
   });
 
   const [error, setError] = useState<string | undefined>(undefined);
@@ -55,9 +58,12 @@ export function MainCard(props: Props) {
 
     const bytecode = await new Provider("sepolia").getCode(contractAddress);
 
-    if (bytecode.length == 0) {
+    if (bytecode === "0x") {
+      setError(
+        `No bytecode at this address. This is not a contract address on the Sepolia network.`,
+      );
       throw Error(
-        `No byteCode at that address. This is not a contract address.`,
+        `No bytecode at this address. This is not a contract address on the Sepolia network.`,
       );
     }
 
@@ -227,12 +233,67 @@ export function MainCard(props: Props) {
               </table>
             </>
           )}
-
           {error && <Alert variant="danger">{error}</Alert>}
         </div>
 
         {functionInterfaces.length !== 0 && (
           <>
+            <div className="centered">
+              <div className="card">
+                <h2 className="centered">Optional Environment Variables</h2>
+                <Form.Group className="col mb-3">
+                  <Form.Label>Proxy Address</Form.Label>
+                  <Form.Control
+                    {...register("proxyAddress", {
+                      validate: validateContractAddress,
+                    })}
+                    placeholder=""
+                  />
+                  {formState.errors.proxyAddress && (
+                    <Alert variant="info">
+                      Ethereum contract address is required.{" "}
+                      {formState.errors.proxyAddress.message}
+                    </Alert>
+                  )}
+                  <Form.Text />
+                </Form.Group>
+                <Form.Group className="col mb-3">
+                  <Form.Label>Value (in WEI)</Form.Label>
+                  <Form.Control
+                    {...register("valueInWEI", {
+                      min: 0,
+                    })}
+                    type="number"
+                    placeholder="0"
+                  />
+                  {formState.errors.valueInWEI && (
+                    <Alert variant="info">
+                      A number greater or equal to 0 is required.{" "}
+                      {formState.errors.valueInWEI.message}
+                    </Alert>
+                  )}
+                  <Form.Text />
+                </Form.Group>
+                <Form.Group className="col mb-3">
+                  <Form.Label>GasLimit</Form.Label>
+                  <Form.Control
+                    {...register("gasLimit", {
+                      min: 0,
+                    })}
+                    type="number"
+                    placeholder="0"
+                  />
+                  {formState.errors.gasLimit && (
+                    <Alert variant="info">
+                      A number greater or equal to 0 is required.{" "}
+                      {formState.errors.gasLimit.message}
+                    </Alert>
+                  )}
+                  <Form.Text />
+                </Form.Group>
+              </div>
+            </div>
+
             {functionInterfaces.map((element, position) => {
               return (
                 <ReadWriteRow
@@ -243,6 +304,9 @@ export function MainCard(props: Props) {
                   databaseLookUpArray={element.databaseLookUpArray}
                   perfectMatchName={element.perfectMatchName}
                   inputParameterTypeArray={element.inputParameterTypeArray}
+                  proxyAddress={proxyAddress}
+                  valueInWEI={valueInWEI}
+                  gasLimit={gasLimit}
                 />
               );
             })}

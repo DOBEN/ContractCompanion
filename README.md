@@ -50,12 +50,12 @@ yarn lint
 This section summarizes projects that are interesting to check out for a deep dive into EVM bytecode analysis.
 
 - [Evmole](https://github.com/cdump/evmole)
+- [Heimdall](https://github.com/Jon-Becker/heimdall-rs)
 - [Whatsabi](https://github.com/shazow/whatsabi)
 - [EVM_Opcodes](https://www.evm.codes/)
 - [EVM_Playground](https://www.evm.codes/playground?fork=shanghai)
 - [Panoramix](https://github.com/palkeo/panoramix)
 - [Symbolic EVM](https://github.com/acuarica/evm)
-- [Heimdall](https://github.com/Jon-Becker/heimdall-rs)
 - [EtherVM](https://ethervm.io/decompile)
 
 ## Exploring On-Chain Bytecode Diversity
