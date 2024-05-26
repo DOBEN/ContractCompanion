@@ -16,20 +16,9 @@ export interface TypeCharacteristics {
 }
 
 export function decodeReturnParameterTypes(
-  returnValueHexStringLong: string,
+  returnValueWords: string[],
 ): string[] {
-  // Remove '0x'
-  const returnValueHexString = returnValueHexStringLong.slice(2);
   const potentialTypes: string[] = [];
-
-  const wordSize = 64; // 32 bytes = 64 hex characters
-
-  // Ethereum words are 32 bytes long.
-  const returnValueWords = [];
-  for (let i = 0; i < returnValueHexString.length; i += wordSize) {
-    returnValueWords.push(returnValueHexString.slice(i, i + wordSize));
-  }
-
   let coveredWords = new Set<number>();
 
   let wordIndex = 0;
@@ -138,9 +127,9 @@ export function tryDecodeDynamicParameter(
   const dataStartWordOffset = wordOffset + 1;
   const dataEndWordOffset = dataStartWordOffset + sizeOfType - 1;
 
-  if (dataEndWordOffset > returnValueWords.length) {
+  if (dataEndWordOffset >= returnValueWords.length) {
     // Type cannot be an array
-    return tryDecodeDynamicParameterAsBytes(
+    return tryDecodeDynamicParameterAsBytesOrString(
       wordIndex,
       returnValueWords,
       wordOffset,
@@ -157,7 +146,6 @@ export function tryDecodeDynamicParameter(
       word,
       dataStartWordOffset,
       dataEndWordOffset,
-      sizeOfType,
       wordCoverages,
     );
   }
@@ -170,7 +158,6 @@ export function tryDecodeDynamicParameterAsArray(
   word: string,
   dataStartWordOffset: number,
   dataEndWordOffset: number,
-  sizeOfType: number,
   wordCoverages: Set<number>,
 ): DecodedType {
   console.log(`parameter ${wordIndex}: '${word}' may be an array`);
@@ -184,29 +171,13 @@ export function tryDecodeDynamicParameterAsArray(
 
   console.log(`potential array items: ${dataWords}`);
 
-  //   // (2) first, check if this is a `string` type, since some string encodings may appear to be
-  //   // arrays.
-  //   if let Ok(Some(abi_encoded)) = try_decode_dynamic_parameter_string(
-  //     data_words,
-  //     parameter_index,
-  //     calldata_words,
-  //     word,
-  //     word_offset,
-  //     data_start_word_offset,
-  //     size,
-  //     coverages.clone(),
-  // ) {
-  //     return Ok(Some(abi_encoded));
-  // }
-
-  // (3) This is not a `string` type, so we can assume that it is an array. we can extend
-  // `wordCoverages` with the indices of all words from `byteOffset` to
+  // (2) We can extend `wordCoverages` with the indices of all words from `byteOffset` to
   // `dataEndWordOffset`, since we've now covered all words in the ABI-encoded type.
   for (let i = byteOffset; i <= dataEndWordOffset; i++) {
     wordCoverages.add(i);
   }
 
-  // (4) Get the potential type of the array elements. Under the hood, this function:
+  // (3) Get the potential type of the array elements. Under the hood, this function:
   //     - iterates over each word in `dataWords`
   //     - checks if the word is a dynamic type by recursively calling
   //       `tryDecodeDynamicParameter`
@@ -226,7 +197,7 @@ export function tryDecodeDynamicParameterAsArray(
   return { type: `${potentialType}[]`, coverages: wordCoverages };
 }
 
-export function tryDecodeDynamicParameterAsBytes(
+export function tryDecodeDynamicParameterAsBytesOrString(
   wordIndex: number,
   returnValueWords: string[],
   byteOffset: number,
@@ -243,7 +214,7 @@ export function tryDecodeDynamicParameterAsBytes(
 
   // (2) Perform a quick validation check to see if there are enough remaining bytes
   // to contain the ABI-encoded item. If there aren't, return an `BytesCheckOutOfBounds` error.
-  if (dataWords.concat().length < sizeOfType) {
+  if (dataWords.join().length / 2 < sizeOfType) {
     console.error(
       `parameter ${wordIndex}: ${word} is out of bounds (bytes check)`,
     );
@@ -253,11 +224,11 @@ export function tryDecodeDynamicParameterAsBytes(
   // (3) Calculate how many words are needed to store the encoded data with size `sizeOfType`.
   const wordCountForSize = Math.ceil(sizeOfType / 32);
   const dataEndWordOffset = dataStartWordOffset + wordCountForSize;
-  console.log(`with data: ${dataWords.concat()}`);
+  console.log(`with data: ${dataWords.join()}`);
 
   // (4) Perform a quick validation check to see if there are enough remaining bytes
   // to contain the ABI-encoded item. If there aren't, return an `CeiledSizeCheckOutOfBounds` error.
-  if (dataWords.length <= wordCountForSize) {
+  if (dataWords.length < wordCountForSize) {
     console.error(
       `parameter ${wordIndex}: ${word} is out of bounds (CeiledSize check)`,
     );
@@ -266,7 +237,7 @@ export function tryDecodeDynamicParameterAsBytes(
 
   // (5) Get the last word in `dataWords`, so we can perform a size check. There should be
   // `sizeOfType % 32` bytes in this word, and the rest should be null bytes.
-  const lastWord = dataWords[wordCountForSize];
+  const lastWord = dataWords[wordCountForSize - 1];
   const lastWordSize = sizeOfType % 32;
 
   // If the padding size of this last word is greater than `32 - lastWordSize`,
@@ -282,7 +253,7 @@ export function tryDecodeDynamicParameterAsBytes(
 
   // (5) We've covered all words from `dataStartWordOffset` to `dataEndWordOffset`,
   // so add them to `wordCoverages`.
-  for (let i = byteOffset; i <= dataEndWordOffset; i++) {
+  for (let i = byteOffset; i < dataEndWordOffset; i++) {
     wordCoverages.add(i);
   }
 

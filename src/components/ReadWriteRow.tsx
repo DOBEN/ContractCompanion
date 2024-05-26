@@ -9,6 +9,8 @@ import { BrowserProvider, ethers } from "ethers";
 import { TxHashLink } from "./EtherScanTxLink";
 import { decodeReturnParameterTypes } from "../decodeReturnParameterTypes/decode";
 
+const ETHEREUM_WORD_SIZE = 64; // 32 bytes = 64 hex characters
+
 interface Props {
   functionHash: string;
   contractAddress: string | undefined;
@@ -100,8 +102,8 @@ export function ReadWriteRow(props: Props) {
     name: ["shouldWrite", "inputParameter", "returnParameterType"],
   });
 
-  const [rawByteReturnValue, setRawByteReturnValue] = useState<
-    string | undefined
+  const [returnValueWords, setReturnValueWords] = useState<
+    string[] | undefined
   >(undefined);
 
   const [txHash, setTxHash] = useState<string | undefined>(undefined);
@@ -114,7 +116,7 @@ export function ReadWriteRow(props: Props) {
   async function onSubmitWrite() {
     setError(undefined);
     setTxHash(undefined);
-    setRawByteReturnValue(undefined);
+    setReturnValueWords(undefined);
     setParsedReturnValue(undefined);
 
     if (
@@ -168,7 +170,7 @@ export function ReadWriteRow(props: Props) {
 
   async function onSubmitRead() {
     setError(undefined);
-    setRawByteReturnValue(undefined);
+    setReturnValueWords(undefined);
     setParsedReturnValue(undefined);
     setTxHash(undefined);
 
@@ -188,8 +190,6 @@ export function ReadWriteRow(props: Props) {
 
     setWaiting(true);
 
-    let returnValueRawBytes;
-
     // Call contract
     try {
       const inputParameterABIEncoded = parseInputParameter(
@@ -205,13 +205,52 @@ export function ReadWriteRow(props: Props) {
           (inputParameterABIEncoded ? inputParameterABIEncoded : ""),
       };
 
-      returnValueRawBytes = await provider.call(transaction);
-      setRawByteReturnValue(returnValueRawBytes);
+      const returnValueRawBytes = await provider.call(transaction);
 
-      // If returnParameterTypes are provided, parse the return parameter.
-      if (returnParameterType) {
+      // Remove '0x'
+      const returnValueTruncated = returnValueRawBytes.slice(2);
+
+      // Split the return value into Etheruem words of size 32 bytes.
+      const returnValueWordsArray = [];
+      for (
+        let i = 0;
+        i < returnValueTruncated.length;
+        i += ETHEREUM_WORD_SIZE
+      ) {
+        returnValueWordsArray.push(
+          returnValueTruncated.slice(i, i + ETHEREUM_WORD_SIZE),
+        );
+      }
+      setReturnValueWords(returnValueWordsArray);
+
+      // The manually set `returnParameterType` takes precedence over decoding the return parameter types.
+      let finalReturnParameterTypes = returnParameterType;
+
+      // If no `returnParameterType` is given in the inputField, try to decode the return parameter types
+      // and update the inputField with them. If needed, the user can "correct" the
+      // filled in types and press the `read` button a second time.
+      if (!finalReturnParameterTypes && returnValueWordsArray.length != 0) {
+        const decodedReturnValueTypes = decodeReturnParameterTypes(
+          returnValueWordsArray,
+        );
+
+        if (decodedReturnValueTypes) {
+          const typesAsString = decodedReturnValueTypes
+            .map((item) => `"${item}"`)
+            .join(", ");
+
+          finalReturnParameterTypes = "[" + typesAsString + "]";
+          setValue("returnParameterType", finalReturnParameterTypes);
+        } else {
+          // TODO: improve on the decoding; proper error display once decoding is reliable
+          console.log("Could not derive return parameter types");
+        }
+      }
+
+      // If `finalReturnParameterTypes` are available, parse the return parameter.
+      if (finalReturnParameterTypes) {
         const parsedReturnValue = parseReturnParameter(
-          returnParameterType,
+          finalReturnParameterTypes,
           returnValueRawBytes,
         );
 
@@ -225,23 +264,6 @@ export function ReadWriteRow(props: Props) {
       setError((e as Error).message);
     } finally {
       setWaiting(false);
-    }
-
-    // Try to decode the return parameter types.
-    if (returnValueRawBytes) {
-      const decodedReturnValueTypes =
-        decodeReturnParameterTypes(returnValueRawBytes);
-      if (decodedReturnValueTypes) {
-        const types = decodedReturnValueTypes
-          .map((item) => `"${item}"`)
-          .join(", ");
-
-        console.log(types);
-        setValue("returnParameterType", "[" + types + "]");
-      } else {
-        // TODO: improve on the decoding; proper error display once decoding is reliable
-        console.log("Could not derive return parameter types");
-      }
     }
   }
 
@@ -325,9 +347,9 @@ export function ReadWriteRow(props: Props) {
           <PulseLoader /> Waiting
         </>
       )}
-      {rawByteReturnValue && (
+      {returnValueWords && (
         <>
-          <Alert variant="info">
+          <Alert variant="secondary">
             Returned raw bytes from the smart contract{" "}
             {parsedReturnValue === undefined
               ? `. Add associated array of
@@ -339,14 +361,17 @@ export function ReadWriteRow(props: Props) {
             variant="info"
             style={{ wordWrap: "break-word", maxWidth: `100%` }}
           >
-            {rawByteReturnValue}
+            <pre>{returnValueWords.join("\n")}</pre>
           </Alert>
         </>
       )}
 
       {parsedReturnValue && (
         <>
-          <Alert variant="info">Parsed return parameter:</Alert>
+          <Alert variant="secondary">Parsed return parameter:</Alert>
+          <Alert variant="secondary">
+            (You can correct the types manually in the input field)
+          </Alert>
           <Alert
             variant="info"
             style={{ wordWrap: "break-word", maxWidth: `100%` }}
