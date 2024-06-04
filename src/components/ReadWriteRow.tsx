@@ -4,12 +4,15 @@ import { Alert, Button, Form } from "react-bootstrap";
 import Switch from "react-switch";
 import PulseLoader from "react-spinners/PulseLoader";
 
+import { guessAbiEncodedData } from "@openchainxyz/abi-guesser";
 import { BrowserProvider, ethers } from "ethers";
+import { ParamType } from "ethers/abi";
 
 import { TxHashLink } from "./EtherScanTxLink";
-import { decodeReturnParameterTypes } from "../decodeReturnParameterTypes/decode";
 
 const ETHEREUM_WORD_SIZE = 64; // 32 bytes = 64 hex characters
+
+const abiCoder = new ethers.AbiCoder();
 
 interface Props {
   functionHash: string;
@@ -36,8 +39,6 @@ function parseInputParameter(
   }
 
   try {
-    const abiCoder = new ethers.AbiCoder();
-
     // Parse the valid JSON string into arrays
     const inputParameterArray = JSON.parse(inputParameter);
 
@@ -57,8 +58,6 @@ function parseReturnParameter(
   returnValueRawBytes: string,
 ) {
   try {
-    const abiCoder = new ethers.AbiCoder();
-
     // Parse the valid JSON string into arrays
     const returnParameterTypeArray = JSON.parse(returnParameterType);
 
@@ -230,13 +229,13 @@ export function ReadWriteRow(props: Props) {
       // and update the inputField with them. If needed, the user can "correct" the
       // filled in types and press the `read` button a second time.
       if (!finalReturnParameterTypes && returnValueWordsArray.length != 0) {
-        const decodedReturnValueTypes = decodeReturnParameterTypes(
-          returnValueWordsArray,
-        );
+        const paramTypes = Array.from(
+          guessAbiEncodedData(returnValueTruncated)!,
+        ) as unknown as ParamType[];
 
-        if (decodedReturnValueTypes) {
-          const typesAsString = decodedReturnValueTypes
-            .map((item) => `"${item}"`)
+        if (paramTypes) {
+          const typesAsString = paramTypes
+            .map((item) => `"${item.format()}"`)
             .join(", ");
 
           finalReturnParameterTypes = "[" + typesAsString + "]";

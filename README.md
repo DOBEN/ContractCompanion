@@ -5,7 +5,7 @@
 ## How It Works
 
 You can use the front to interact with any contract on the Sepolia network - reading and writing. You don't need to have access to the ABI or source code to do so just provide the contract address.
-The front end extracts function selectors and arguments from the Ethereum Virtual Machine (EVM) bytecode, even for unverified contracts. If the signature is known (e.g. via lookups in the [database](https://www.4byte.directory)), it even displays the matching human-readable names of the functions. Optionally, you can provide the return parameter types to decode the return parameter when reading data from the contract.
+The front end extracts function selectors and input parameter types from the Ethereum Virtual Machine (EVM) bytecode, even for unverified contracts. If the signature is known (e.g. via lookups in the [database](https://www.4byte.directory)), it even displays the matching human-readable names of the functions. In addition, the front end decodes the return parameter types when reading data from a smart contract by analyzing the returned raw bytes.
 
 ## Commands
 
@@ -57,6 +57,13 @@ This section summarizes projects that are interesting to check out for a deep di
 - [Panoramix](https://github.com/palkeo/panoramix)
 - [Symbolic EVM](https://github.com/acuarica/evm)
 - [EtherVM](https://ethervm.io/decompile)
+
+## ABI-encoded Data Analyzers
+
+This section summarizes projects that are interesting to check out for decoding ABI-encoded blob data (such as calldata, and return values)
+
+- [OpenChain](https://github.com/openchainxyz/abi-guesser)
+- [Heimdall](https://github.com/Jon-Becker/heimdall-rs/tree/main/crates/decode)
 
 ## Exploring On-Chain Bytecode Diversity
 

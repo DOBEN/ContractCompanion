@@ -1,5 +1,5 @@
 {
-  "name": "@DOBEN/contract-companion",
+  "name": "contract_companion",
   "description": "Interact with any contract on-chain (no-ABI/source code needed; the interface is decoded from the bytecode)",
   "author": "Doris Benda",
   "private": true,
@@ -14,6 +14,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@openchainxyz/abi-guesser": "^1.0.2",
     "@types/react-router-dom": "^5.3.3",
     "bootstrap": "^5.3.3",
     "ethers": "^6.11.1",
