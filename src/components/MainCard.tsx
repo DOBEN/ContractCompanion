@@ -95,66 +95,74 @@ export function MainCard(props: Props) {
 
   useEffect(() => {
     async function fetchFunctionInterfacesFromDatabase() {
-      const temp_functionInterfaces = functionInterfaces;
-      const urls = functionInterfaces.map(
-        (item) =>
-          `https://www.4byte.directory/api/v1/signatures/?hex_signature=${item.functionHash.slice(2)}`,
-      );
+      const tempFunctionInterfaces = [...functionInterfaces]; // Spread to create a new array copy
 
-      const all_functionInterfaces = await Promise.all(
-        urls.map(async (url, position) => {
-          const response = await fetch(url, {
-            method: "GET",
-            headers: new Headers({ "content-type": "application/json" }),
-          });
+      const functionHashes = tempFunctionInterfaces.map(
+        (item) => item.functionHash,
+      );
+      if (functionHashes.length > 0) {
+        try {
+          const response = await fetch(
+            `https://api.openchain.xyz/signature-database/v1/lookup?function=${functionHashes.join(",")}&filter=false`,
+            {
+              method: "GET",
+              headers: new Headers({ "Content-Type": "application/json" }),
+            },
+          );
 
           if (!response.ok) {
-            const error = response.json();
+            const error = await response.json();
             console.error(
-              `Unable to fetch function signature: ${JSON.stringify(error)}`,
+              `Unable to fetch function signatures: ${JSON.stringify(error)}`,
             );
+            return; // Exit the function if the response is not OK
           }
 
           const abi = await response.json();
 
-          for (let j = 0; j < abi.results.length; j++) {
-            const sig = abi.results[j].text_signature;
-            temp_functionInterfaces[position].databaseLookUpArray.push(
-              abi.results[j].text_signature,
+          tempFunctionInterfaces.forEach((functionInterface) => {
+            const potentialFunctions =
+              abi.result.function[functionInterface.functionHash] || [];
+
+            potentialFunctions.forEach(
+              (potentialFunction: { name: string }) => {
+                // Find perfect name and input parameter match
+                const regex = /\((.*?)\)/;
+                const matches = potentialFunction.name.match(regex);
+
+                // Get input parameter types
+                if (matches && matches.length > 1) {
+                  const parametersString = matches[1];
+                  const parameters =
+                    parametersString.trim() === ""
+                      ? []
+                      : parametersString
+                          .split(",")
+                          .map((param) => param.trim());
+
+                  // If we find a function name where the input parameter perfectly matches the extracted input parameter from the bytecode.
+                  // Mark this as the perfect match. We know this is the correct function name for sure.
+                  if (
+                    JSON.stringify(parameters) ===
+                    JSON.stringify(functionInterface.inputParameterTypeArray)
+                  ) {
+                    const functionName = potentialFunction.name
+                      .substring(0, potentialFunction.name.indexOf("("))
+                      .trim();
+                    functionInterface.perfectMatchName = functionName;
+                  }
+                }
+              },
             );
 
-            const regex = /\((.*?)\)/;
-            const matches = sig.match(regex);
+            functionInterface.databaseLookUpArray = potentialFunctions;
+          });
 
-            // Get input paramter types
-            if (matches && matches.length > 1) {
-              const parametersString = matches[1];
-              const parameters =
-                parametersString.trim() === ""
-                  ? []
-                  : parametersString
-                      .split(",")
-                      .map((param: string) => param.trim());
-
-              // If we find a function name where the input parameter perfectly matches the extracted input parameter from the bytecode.
-              // Mark this as the perfect match. We know this is the correct function name for sure.
-              if (
-                JSON.stringify(parameters) ===
-                JSON.stringify(
-                  temp_functionInterfaces[position].inputParameterTypeArray,
-                )
-              ) {
-                const functionName = sig.substring(0, sig.indexOf("(")).trim();
-                temp_functionInterfaces[position].perfectMatchName =
-                  functionName;
-              }
-            }
-          }
-          return temp_functionInterfaces[position];
-        }),
-      );
-
-      setFunctionInterfaces(all_functionInterfaces);
+          setFunctionInterfaces(tempFunctionInterfaces);
+        } catch (error) {
+          console.error(`Error fetching function signatures: ${error}`);
+        }
+      }
     }
 
     fetchFunctionInterfacesFromDatabase();
