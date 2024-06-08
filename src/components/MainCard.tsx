@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { Alert, Button, Form } from "react-bootstrap";
+import Switch from "react-switch";
 
 import { EtherscanProvider as Provider, BrowserProvider } from "ethers";
 import { functionArguments, functionSelectors } from "evmole";
 
-import { validateContractAddress } from "../utils";
+import { validateByteCode, validateAddress } from "../utils";
 import { ReadWriteRow } from "./ReadWriteRow";
 
 interface Props {
@@ -24,18 +25,38 @@ export function MainCard(props: Props) {
   const { provider } = props;
 
   type FormType = {
+    deriveFromContractAddress: string | undefined;
+    deriveFromChain: boolean;
+    byteCode: string | undefined;
     contractAddress: string | undefined;
-    proxyAddress: string | undefined;
     valueInWEI: number | undefined;
     gasLimit: number | undefined;
   };
-  const { control, register, formState, handleSubmit } = useForm<FormType>({
-    mode: "all",
-  });
+  const { control, register, formState, handleSubmit, reset } =
+    useForm<FormType>({
+      defaultValues: {
+        deriveFromChain: true,
+      },
+      mode: "all",
+    });
 
-  const [contractAddress, proxyAddress, valueInWEI, gasLimit] = useWatch({
+  const [
+    deriveFromContractAddress,
+    deriveFromChain,
+    byteCode,
+    contractAddress,
+    valueInWEI,
+    gasLimit,
+  ] = useWatch({
     control: control,
-    name: ["contractAddress", "proxyAddress", "valueInWEI", "gasLimit"],
+    name: [
+      "deriveFromContractAddress",
+      "deriveFromChain",
+      "byteCode",
+      "contractAddress",
+      "valueInWEI",
+      "gasLimit",
+    ],
   });
 
   const [error, setError] = useState<string | undefined>(undefined);
@@ -44,35 +65,51 @@ export function MainCard(props: Props) {
     FunctionInterface[]
   >([]);
 
-  async function onSubmit() {
+  async function onSubmit(providedByteCode: string | undefined) {
     setError(undefined);
     setFunctionInterfaces([]);
     setNewLoad(false);
 
-    if (contractAddress === undefined) {
-      setError(`'Contract Address' input field is undefined`);
-      throw Error(`'Contract Address' input field is undefined`);
+    let byteCode;
+
+    if (deriveFromChain) {
+      if (deriveFromContractAddress === undefined) {
+        setError(`'Contract Address' input field is undefined`);
+        throw Error(`'Contract Address' input field is undefined`);
+      }
+      byteCode = await new Provider("sepolia").getCode(
+        deriveFromContractAddress,
+      );
+
+      if (byteCode === "0x") {
+        setError(
+          `No bytecode at this address. This is not a contract address on the Sepolia network.`,
+        );
+        throw Error(
+          `No bytecode at this address. This is not a contract address on the Sepolia network.`,
+        );
+      }
+    } else {
+      if (providedByteCode === undefined) {
+        setError(`'byteCode' input field is undefined`);
+        throw Error(`'byteCode' input field is undefined`);
+      }
+      byteCode = providedByteCode;
     }
 
     // TODO: add different chain handling
 
-    const bytecode = await new Provider("sepolia").getCode(contractAddress);
+    const list = functionSelectors(byteCode);
 
-    if (bytecode === "0x") {
-      setError(
-        `No bytecode at this address. This is not a contract address on the Sepolia network.`,
-      );
-      throw Error(
-        `No bytecode at this address. This is not a contract address on the Sepolia network.`,
-      );
+    if (list.length === 0) {
+      setError("Could not find any function selectors in the bytecode.");
+      return;
     }
-
-    const list = functionSelectors(bytecode);
 
     const interfaces: FunctionInterface[] = [];
 
     for (let i = 0; i < list.length; i++) {
-      const argumentsString = functionArguments(bytecode, list[i]);
+      const argumentsString = functionArguments(byteCode, list[i]);
 
       const inputParameters: string[] =
         argumentsString.trim() === ""
@@ -176,24 +213,69 @@ export function MainCard(props: Props) {
           <br />
           <h2 className="centered">Interact With Any Contract</h2>
           <br />
-          <Form onSubmit={handleSubmit(onSubmit)}>
-            <Form.Group className="col mb-3">
+          <Form onSubmit={handleSubmit(() => onSubmit(byteCode))}>
+            <Form.Group className="col mb-3 centerItems">
               <Form.Label>Contract Address</Form.Label>
-              <Form.Control
-                {...register("contractAddress", {
-                  required: true,
-                  validate: validateContractAddress,
-                })}
-                placeholder="0x677c09067dB0990904D01C561c32cf800a67B786"
+              <Controller
+                name="deriveFromChain"
+                control={control}
+                render={({ field: { value } }) => (
+                  <Switch
+                    onChange={() => {
+                      // Resets all values in the form except this switch.
+                      reset({ deriveFromChain: !value });
+                      setFunctionInterfaces([]);
+                    }}
+                    onColor="#808080"
+                    checked={!value}
+                    checkedIcon={false}
+                    uncheckedIcon={false}
+                  />
+                )}
               />
-              {formState.errors.contractAddress && (
-                <Alert variant="info">
-                  Ethereum contract address is required.{" "}
-                  {formState.errors.contractAddress.message}
-                </Alert>
-              )}
-              <Form.Text />
+              <Form.Label>Deployed Bytecode</Form.Label>
             </Form.Group>
+
+            <Form.Group className="col mb-3">
+              {!deriveFromChain && (
+                <>
+                  <textarea
+                    style={{ width: "100%" }}
+                    defaultValue={byteCode}
+                    {...register("byteCode", {
+                      required: true,
+                      validate: validateByteCode,
+                    })}
+                  ></textarea>
+                  {formState.errors.byteCode?.message != undefined && (
+                    <Alert variant="info">
+                      ByteCode is required. {formState.errors.byteCode.message}
+                    </Alert>
+                  )}
+                </>
+              )}
+
+              {deriveFromChain && (
+                <>
+                  <Form.Control
+                    {...register("deriveFromContractAddress", {
+                      required: true,
+                      validate: validateAddress,
+                    })}
+                    placeholder="0x677c09067dB0990904D01C561c32cf800a67B786"
+                  />
+                  {formState.errors.deriveFromContractAddress?.message !=
+                    undefined && (
+                    <Alert variant="info">
+                      Ethereum contract address is required.{" "}
+                      {formState.errors.deriveFromContractAddress.message}
+                    </Alert>
+                  )}
+                  <Form.Text />
+                </>
+              )}
+            </Form.Group>
+
             <Button variant="secondary" type="submit">
               Get Interface
             </Button>
@@ -248,25 +330,30 @@ export function MainCard(props: Props) {
           <>
             <div className="centered">
               <div className="card">
-                <h2 className="centered">Optional Environment Variables</h2>
+                <h2 className="centered">Environment Variables</h2>
                 <Form.Group className="col mb-3">
-                  <Form.Label>Proxy Address</Form.Label>
+                  <Form.Label>
+                    {deriveFromChain
+                      ? "Proxy Address (Optional)"
+                      : "Contract Address"}
+                  </Form.Label>
                   <Form.Control
-                    {...register("proxyAddress", {
-                      validate: validateContractAddress,
+                    {...register("contractAddress", {
+                      validate: validateAddress,
                     })}
                     placeholder=""
                   />
-                  {formState.errors.proxyAddress && (
+                  {formState.errors.contractAddress?.message !=
+                    undefined  && (
                     <Alert variant="info">
                       Ethereum contract address is required.{" "}
-                      {formState.errors.proxyAddress.message}
+                      {formState.errors.contractAddress.message}
                     </Alert>
                   )}
                   <Form.Text />
                 </Form.Group>
                 <Form.Group className="col mb-3">
-                  <Form.Label>Value (in WEI)</Form.Label>
+                  <Form.Label>Value in WEI (Optional)</Form.Label>
                   <Form.Control
                     {...register("valueInWEI", {
                       min: 0,
@@ -283,7 +370,7 @@ export function MainCard(props: Props) {
                   <Form.Text />
                 </Form.Group>
                 <Form.Group className="col mb-3">
-                  <Form.Label>GasLimit</Form.Label>
+                  <Form.Label>GasLimit (Optional)</Form.Label>
                   <Form.Control
                     {...register("gasLimit", {
                       min: 0,
@@ -312,7 +399,8 @@ export function MainCard(props: Props) {
                   databaseLookUpArray={element.databaseLookUpArray}
                   perfectMatchName={element.perfectMatchName}
                   inputParameterTypeArray={element.inputParameterTypeArray}
-                  proxyAddress={proxyAddress}
+                  deriveFromContractAddress={deriveFromContractAddress}
+                  deriveFromChain={deriveFromChain}
                   valueInWEI={valueInWEI}
                   gasLimit={gasLimit}
                 />

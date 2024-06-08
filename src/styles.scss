@@ -81,6 +81,15 @@ input {
   color: black;
 }
 
+textarea {
+  width: 100%;
+  height: 200px;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #ededed;
+  border-radius: 8px;
+}
+
 .navbar {
   background-color: rgba(0, 0, 0, 0.05);
   display: flex;

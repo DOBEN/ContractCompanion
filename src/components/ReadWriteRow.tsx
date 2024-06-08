@@ -21,9 +21,10 @@ interface Props {
   databaseLookUpArray: string[];
   perfectMatchName: string | undefined;
   inputParameterTypeArray: string[];
-  proxyAddress: string | undefined;
+  deriveFromContractAddress: string | undefined;
   valueInWEI: number | undefined;
   gasLimit: number | undefined;
+  deriveFromChain: boolean;
 }
 
 function parseInputParameter(
@@ -83,7 +84,8 @@ export function ReadWriteRow(props: Props) {
     databaseLookUpArray,
     valueInWEI,
     gasLimit,
-    proxyAddress,
+    deriveFromContractAddress,
+    deriveFromChain,
   } = props;
 
   type FormType = {
@@ -132,6 +134,17 @@ export function ReadWriteRow(props: Props) {
       throw Error(`Connect Your Browser Wallet`);
     }
 
+    // If the contract interface was derived NOT from the chain but instead by providing the raw byte code in
+    // the text area, we need a manually set 'contractAddress` to be able to read and write from the chain.
+    if (!deriveFromChain && contractAddress === undefined) {
+      setError(
+        `Set the "Contract Address" in the "Environment Variables" box.`,
+      );
+      throw Error(
+        `Set the "Contract Address" in the "Environment Variables" box.`,
+      );
+    }
+
     setWaiting(true);
 
     try {
@@ -142,8 +155,8 @@ export function ReadWriteRow(props: Props) {
 
       // Create transaction
       const transaction = {
-        // If `proxyAddress` is set, we send the request to the proxy instead of the `contractAddress`.
-        to: proxyAddress ? proxyAddress : contractAddress,
+        // If `contractAddress (e.g. a proxyAddress)` is set, we send the request to this address instead of the `deriveFromContractAddress`.
+        to: contractAddress ? contractAddress : deriveFromContractAddress,
         data:
           functionHash +
           (inputParameterABIEncoded ? inputParameterABIEncoded : ""),
@@ -187,6 +200,17 @@ export function ReadWriteRow(props: Props) {
       throw Error(`Connect Your Browser Wallet`);
     }
 
+    // If the contract interface was derived NOT from the chain but instead by providing the raw byte code in
+    // the text area, we need a manually set 'contractAddress` to be able to read and write from the chain.
+    if (!deriveFromChain && contractAddress === undefined) {
+      setError(
+        `Set the "Contract Address" in the "Environment Variables" box.`,
+      );
+      throw Error(
+        `Set the "Contract Address" in the "Environment Variables" box.`,
+      );
+    }
+
     setWaiting(true);
 
     // Call contract
@@ -198,7 +222,8 @@ export function ReadWriteRow(props: Props) {
 
       // Create transaction
       const transaction = {
-        to: proxyAddress ? proxyAddress : contractAddress,
+        // If `contractAddress (e.g. a proxyAddress)` is set, we send the request to this address instead of the `deriveFromContractAddress`.
+        to: contractAddress ? contractAddress : deriveFromContractAddress,
         data:
           functionHash +
           (inputParameterABIEncoded ? inputParameterABIEncoded : ""),
