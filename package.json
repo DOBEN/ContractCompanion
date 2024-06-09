@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@openchainxyz/abi-guesser": "^1.0.2",
-    "@types/react-router-dom": "^5.3.3",
     "bootstrap": "^5.3.3",
     "ethers": "^6.11.1",
     "evmole": "^0.3.3",
@@ -24,11 +23,13 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.50.1",
     "react-router-dom": "^6.22.1",
+    "react-select": "^5.8.0",
     "react-spinners": "^0.13.8",
     "react-switch": "^7.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
+    "@types/react-router-dom": "^5.3.3",
     "@types/react-dom": "^18.2.19",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.20.0",

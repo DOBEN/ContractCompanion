@@ -28,3 +28,30 @@ export function validateByteCode(byteCode: string | undefined) {
     return `Please enter a valid byteCode. It is a hex string [0-9a-fA-F] with "0x" prefix.`;
   }
 }
+
+// Define the option type.
+export type OptionType = { label: string; value: bigint };
+
+// Available options for the blockchain network.
+export const ETHEREUM = { label: "Ethereum", value: 1n };
+export const SEPOLIA = { label: "Sepolia (testnet)", value: 11155111n };
+// export const INJECTED = { label: 'Injected Network (by wallet)', value: -1 };
+
+// All available blockchain network options.
+export const NETWORK_OPTIONS: OptionType[] = [
+  ETHEREUM,
+  SEPOLIA,
+  // INJECTED
+];
+
+// Helper function to find the blockchain network name by value.
+export const getNetworkName = (value: bigint | undefined) => {
+  return findOption(value)?.label;
+};
+
+// Helper function to find the option by value.
+export const findOption = (value: bigint | undefined) => {
+  if (value) {
+    return NETWORK_OPTIONS.find((option) => option.value === value);
+  }
+};

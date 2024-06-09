@@ -2,27 +2,42 @@ import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { Alert, Button, Form } from "react-bootstrap";
 import Switch from "react-switch";
+import Select, { SingleValue } from "react-select";
 
-import { EtherscanProvider as Provider, BrowserProvider } from "ethers";
+import { BrowserProvider, EtherscanProvider as Provider } from "ethers";
 import { functionArguments, functionSelectors } from "evmole";
 
-import { validateByteCode, validateAddress } from "../utils";
+import {
+  NETWORK_OPTIONS,
+  findOption,
+  getNetworkName,
+  OptionType,
+  validateAddress,
+  validateByteCode,
+} from "../utils";
 import { ReadWriteRow } from "./ReadWriteRow";
 
 interface Props {
-  accountAddress: string | undefined;
   provider: BrowserProvider | undefined;
+  blockchainNetwork: bigint | undefined;
+  setBlockchainNetwork: (network: bigint | undefined) => void;
+  clearWalletConnection: () => void;
 }
 
 interface FunctionInterface {
+  databaseLookUpArray: string[];
   functionHash: string;
   inputParameterTypeArray: string[];
-  databaseLookUpArray: string[];
   perfectMatchName: string | undefined;
 }
 
 export function MainCard(props: Props) {
-  const { provider } = props;
+  const {
+    provider,
+    blockchainNetwork,
+    setBlockchainNetwork,
+    clearWalletConnection,
+  } = props;
 
   type FormType = {
     deriveFromContractAddress: string | undefined;
@@ -32,7 +47,7 @@ export function MainCard(props: Props) {
     valueInWEI: number | undefined;
     gasLimit: number | undefined;
   };
-  const { control, register, formState, handleSubmit, reset } =
+  const { formState, control, handleSubmit, register, reset } =
     useForm<FormType>({
       defaultValues: {
         deriveFromChain: true,
@@ -73,31 +88,37 @@ export function MainCard(props: Props) {
     let byteCode;
 
     if (deriveFromChain) {
-      if (deriveFromContractAddress === undefined) {
+      if (!deriveFromContractAddress) {
         setError(`'Contract Address' input field is undefined`);
         throw Error(`'Contract Address' input field is undefined`);
       }
-      byteCode = await new Provider("sepolia").getCode(
+
+      if (!blockchainNetwork) {
+        setError(`Select 'Blockchain Network' in the drop down`);
+        throw Error(`Select 'Blockchain Network' in the drop down`);
+      }
+
+      byteCode = await new Provider(blockchainNetwork).getCode(
         deriveFromContractAddress,
       );
 
+      const networkName = getNetworkName(blockchainNetwork);
+
       if (byteCode === "0x") {
         setError(
-          `No bytecode at this address. This is not a contract address on the Sepolia network.`,
+          `No bytecode at this address. This is not a contract address on the "${networkName}" network.`,
         );
         throw Error(
-          `No bytecode at this address. This is not a contract address on the Sepolia network.`,
+          `No bytecode at this address. This is not a contract address on the "${networkName}" network.`,
         );
       }
     } else {
-      if (providedByteCode === undefined) {
+      if (!providedByteCode) {
         setError(`'byteCode' input field is undefined`);
         throw Error(`'byteCode' input field is undefined`);
       }
       byteCode = providedByteCode;
     }
-
-    // TODO: add different chain handling
 
     const list = functionSelectors(byteCode);
 
@@ -209,10 +230,22 @@ export function MainCard(props: Props) {
     <>
       <div className="centered">
         <div className="card">
-          <h2 className="centered">WORKS ONLY ON SEPOLIA FOR MVP</h2>
-          <br />
           <h2 className="centered">Interact With Any Contract</h2>
           <br />
+
+          <Form.Group className="col mb-3">
+            <Form.Label>Blockchain Network</Form.Label>
+            <Select
+              options={NETWORK_OPTIONS}
+              value={findOption(blockchainNetwork)}
+              onChange={(selectedOption: SingleValue<OptionType>) => {
+                clearWalletConnection();
+                setBlockchainNetwork(selectedOption?.value);
+              }}
+            />
+            <Form.Text />
+          </Form.Group>
+
           <Form onSubmit={handleSubmit(() => onSubmit(byteCode))}>
             <Form.Group className="col mb-3 centerItems">
               <Form.Label>Contract Address</Form.Label>
@@ -247,7 +280,7 @@ export function MainCard(props: Props) {
                       validate: validateByteCode,
                     })}
                   ></textarea>
-                  {formState.errors.byteCode?.message != undefined && (
+                  {formState.errors.byteCode && (
                     <Alert variant="info">
                       ByteCode is required. {formState.errors.byteCode.message}
                     </Alert>
@@ -264,8 +297,7 @@ export function MainCard(props: Props) {
                     })}
                     placeholder="0x677c09067dB0990904D01C561c32cf800a67B786"
                   />
-                  {formState.errors.deriveFromContractAddress?.message !=
-                    undefined && (
+                  {formState.errors.deriveFromContractAddress && (
                     <Alert variant="info">
                       Ethereum contract address is required.{" "}
                       {formState.errors.deriveFromContractAddress.message}
@@ -343,8 +375,7 @@ export function MainCard(props: Props) {
                     })}
                     placeholder=""
                   />
-                  {formState.errors.contractAddress?.message !=
-                    undefined  && (
+                  {formState.errors.contractAddress && (
                     <Alert variant="info">
                       Ethereum contract address is required.{" "}
                       {formState.errors.contractAddress.message}
@@ -396,7 +427,6 @@ export function MainCard(props: Props) {
                   provider={provider}
                   contractAddress={contractAddress}
                   functionHash={element.functionHash}
-                  databaseLookUpArray={element.databaseLookUpArray}
                   perfectMatchName={element.perfectMatchName}
                   inputParameterTypeArray={element.inputParameterTypeArray}
                   deriveFromContractAddress={deriveFromContractAddress}

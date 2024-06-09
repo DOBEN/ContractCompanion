@@ -18,7 +18,6 @@ interface Props {
   functionHash: string;
   contractAddress: string | undefined;
   provider: BrowserProvider | undefined;
-  databaseLookUpArray: string[];
   perfectMatchName: string | undefined;
   inputParameterTypeArray: string[];
   deriveFromContractAddress: string | undefined;
@@ -35,7 +34,7 @@ function parseInputParameter(
     return "";
   }
 
-  if (inputParameter === undefined) {
+  if (!inputParameter) {
     throw new Error("Set input parameters in input field.");
   }
 
@@ -81,7 +80,6 @@ export function ReadWriteRow(props: Props) {
     provider,
     perfectMatchName,
     inputParameterTypeArray,
-    databaseLookUpArray,
     valueInWEI,
     gasLimit,
     deriveFromContractAddress,
@@ -129,14 +127,14 @@ export function ReadWriteRow(props: Props) {
       throw Error(`'inputParameter' input field is undefined`);
     }
 
-    if (provider === undefined) {
+    if (!provider) {
       setError(`Connect Your Browser Wallet`);
       throw Error(`Connect Your Browser Wallet`);
     }
 
     // If the contract interface was derived NOT from the chain but instead by providing the raw byte code in
     // the text area, we need a manually set 'contractAddress` to be able to read and write from the chain.
-    if (!deriveFromChain && contractAddress === undefined) {
+    if (!deriveFromChain && !contractAddress) {
       setError(
         `Set the "Contract Address" in the "Environment Variables" box.`,
       );
@@ -195,14 +193,14 @@ export function ReadWriteRow(props: Props) {
       throw Error(`'inputParameter' input field is undefined`);
     }
 
-    if (provider === undefined) {
+    if (!provider) {
       setError(`Connect Your Browser Wallet`);
       throw Error(`Connect Your Browser Wallet`);
     }
 
     // If the contract interface was derived NOT from the chain but instead by providing the raw byte code in
     // the text area, we need a manually set 'contractAddress` to be able to read and write from the chain.
-    if (!deriveFromChain && contractAddress === undefined) {
+    if (!deriveFromChain && !contractAddress) {
       setError(
         `Set the "Contract Address" in the "Environment Variables" box.`,
       );
@@ -394,7 +392,8 @@ export function ReadWriteRow(props: Props) {
         <>
           <Alert variant="secondary">Parsed return parameter:</Alert>
           <Alert variant="secondary">
-            (You can correct the types manually in the input field)
+            (You can correct the types manually in the above input field and
+            press the `Read` button again)
           </Alert>
           <Alert
             variant="info"

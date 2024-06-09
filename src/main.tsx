@@ -12,30 +12,34 @@ import EmailPicture from "./public/email.png";
 import { MainCard } from "./components/MainCard";
 
 import "./styles.scss";
-
-const SEPOLIA_CHAIN_ID = 11155111n;
+import { getNetworkName } from "./utils";
 
 interface MetamaskError extends Error {
   code: number;
 }
 
-async function switchToSepolia() {
-  try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: "0x" + SEPOLIA_CHAIN_ID.toString(16) }],
-    });
-    console.log("Switched to Sepolia network");
-  } catch (switchError) {
-    if ((switchError as MetamaskError).code === 4902) {
-      throw new Error(
-        "Sepolia network is not available in your Metamask, please enable testnets in your Metamask or add the Sepolia testnet manually",
-      );
-    } else {
-      throw new Error(
-        "Failed to switch to the Sepolia network: " +
-          (switchError as Error).message,
-      );
+async function switchToSelectedNetwork(selectedNetwork: bigint | undefined) {
+  if (selectedNetwork) {
+    const networkName = getNetworkName(selectedNetwork);
+
+    try {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0x" + selectedNetwork.toString(16) }],
+      });
+      console.log(`Switched to "${networkName}" network`);
+    } catch (switchError) {
+      if ((switchError as MetamaskError).code === 4902) {
+        throw new Error(
+          `"${networkName}" network is not available in your Metamask.
+         You might need to enable testnets in your Metamask or add the "${networkName}" manually.`,
+        );
+      } else {
+        throw new Error(
+          `Failed to switch to the "${networkName}" network: ` +
+            (switchError as Error).message,
+        );
+      }
     }
   }
 }
@@ -44,19 +48,34 @@ const App = () => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
   );
-  const [account, setAccount] = useState<string>();
+  const [account, setAccount] = useState<string | undefined>();
   const [provider, setProvider] = useState<BrowserProvider | undefined>(
     undefined,
   );
+  const [blockchainNetwork, setBlockchainNetwork] = useState<
+    bigint | undefined
+  >(undefined);
+
+  const clearWalletConnection = async () => {
+    setProvider(undefined);
+    setAccount(undefined);
+  };
 
   const connectWalletHandler = async () => {
+    if (!blockchainNetwork) {
+      setErrorMessage(
+        `Select "Blockchain Network" or "Injected Network" in the dropDown first.`,
+      );
+      return;
+    }
+
     if (window.ethereum) {
       setErrorMessage(undefined);
       let provider = new ethers.BrowserProvider(window.ethereum);
 
-      if ((await provider.getNetwork()).chainId != SEPOLIA_CHAIN_ID) {
+      if ((await provider.getNetwork()).chainId != blockchainNetwork) {
         try {
-          await switchToSepolia();
+          await switchToSelectedNetwork(blockchainNetwork);
           provider = new ethers.BrowserProvider(window.ethereum);
         } catch (e) {
           setErrorMessage((e as Error).message);
@@ -127,7 +146,14 @@ const App = () => {
       <Routes>
         <Route
           path="/"
-          element={<MainCard provider={provider} accountAddress={account} />}
+          element={
+            <MainCard
+              provider={provider}
+              blockchainNetwork={blockchainNetwork}
+              setBlockchainNetwork={setBlockchainNetwork}
+              clearWalletConnection={clearWalletConnection}
+            />
+          }
         />
       </Routes>
     </Router>

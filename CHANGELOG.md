@@ -1,5 +1,7 @@
 ## Unreleased changes
 
+- Add handling of different blockchain networks (`Ethereum` and `Sepolia`).
+- Add textfield option to enable deriving the function interface from raw `byteCode`.
 - Add decoding of return parameter types.
 
 ## 1.0.0
