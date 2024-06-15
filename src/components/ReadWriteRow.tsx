@@ -24,6 +24,7 @@ interface Props {
   valueInWEI: number | undefined;
   gasLimit: number | undefined;
   deriveFromChain: boolean;
+  providerChainId: bigint | undefined;
 }
 
 function parseInputParameter(
@@ -84,6 +85,7 @@ export function ReadWriteRow(props: Props) {
     gasLimit,
     deriveFromContractAddress,
     deriveFromChain,
+    providerChainId,
   } = props;
 
   type FormType = {
@@ -159,7 +161,7 @@ export function ReadWriteRow(props: Props) {
           functionHash +
           (inputParameterABIEncoded ? inputParameterABIEncoded : ""),
         value: valueInWEI ? valueInWEI : 0,
-        gasLimit: gasLimit ? gasLimit : 0,
+        gasLimit: gasLimit ? gasLimit : 3000000,
       };
 
       const signer = await provider.getSigner();
@@ -407,7 +409,7 @@ export function ReadWriteRow(props: Props) {
       )}
       {txHash && (
         <Alert variant="info">
-          <TxHashLink txHash={txHash} />
+          <TxHashLink txHash={txHash} providerChainId={providerChainId} />
         </Alert>
       )}
     </>

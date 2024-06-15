@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Alert, Button } from "react-bootstrap";
@@ -19,7 +19,8 @@ interface MetamaskError extends Error {
 }
 
 async function switchToSelectedNetwork(selectedNetwork: bigint | undefined) {
-  if (selectedNetwork) {
+  // '-1n` is used to signal that the network is injected by the wallet.
+  if (selectedNetwork && selectedNetwork !== -1n) {
     const networkName = getNetworkName(selectedNetwork);
 
     try {
@@ -52,43 +53,111 @@ const App = () => {
   const [provider, setProvider] = useState<BrowserProvider | undefined>(
     undefined,
   );
-  const [blockchainNetwork, setBlockchainNetwork] = useState<
-    bigint | undefined
+  const [providerNetworkName, setProviderNetworkName] = useState<
+    string | undefined
   >(undefined);
+  const [providerChainId, setProviderChainId] = useState<bigint | undefined>(
+    undefined,
+  );
+  const [selectedNetwork, setSelectedNetwork] = useState<bigint | undefined>(
+    undefined,
+  );
 
-  const clearWalletConnection = async () => {
-    setProvider(undefined);
+  useEffect(() => {
+    const initializeProvider = async () => {
+      if (window.ethereum) {
+        // Initialize the provider
+        const initialProvider = new ethers.BrowserProvider(window.ethereum);
+        setProvider(initialProvider);
+
+        try {
+          // Get the networkName + chainId and set it in the state
+          const network = await initialProvider.getNetwork();
+          setProviderNetworkName(network.name);
+          setProviderChainId(network.chainId);
+        } catch (error) {
+          console.error("Error fetching network name: ", error);
+        }
+      } else {
+        console.error("No Ethereum wallet detected");
+      }
+    };
+
+    initializeProvider();
+
+    // Event handler for chainChanged
+    const handleChainChanged = (newChainId: string = "-1") => {
+      console.log("Network changed to: ", parseInt(newChainId, 16));
+
+      // Reload page if user changes the network in the wallet
+      if (newChainId !== "0x" + selectedNetwork?.toString(16)) {
+        window.location.reload();
+      }
+    };
+
+    // Event handler for accountChanged
+    const handleAccountChanged = async () => {
+      if (provider) {
+        try {
+          const accounts = await provider.send("eth_requestAccounts", []);
+
+          console.log("Account changed to: ", accounts[0]);
+
+          setAccount(accounts[0]);
+        } catch (error) {
+          setErrorMessage((error as Error).message);
+        }
+      }
+    };
+
+    if (window.ethereum) {
+      window.ethereum.on("chainChanged", handleChainChanged);
+      window.ethereum.on("accountsChanged", handleAccountChanged);
+    }
+
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeListener("chainChanged", handleChainChanged);
+        window.ethereum.removeListener("accountsChanged", handleAccountChanged);
+      }
+    };
+  }, [selectedNetwork]);
+
+  const clearAccountConnection = async () => {
     setAccount(undefined);
   };
 
   const connectWalletHandler = async () => {
-    if (!blockchainNetwork) {
-      setErrorMessage(
-        `Select "Blockchain Network" or "Injected Network" in the dropDown first.`,
-      );
+    setErrorMessage(undefined);
+
+    if (!selectedNetwork) {
+      setErrorMessage(`Select "Blockchain Network" in the dropdown first.`);
       return;
     }
 
-    if (window.ethereum) {
-      setErrorMessage(undefined);
-      let provider = new ethers.BrowserProvider(window.ethereum);
+    if (!window.ethereum || !provider) {
+      setErrorMessage("Please install a browser wallet (e.g. Metamask).");
+      return;
+    }
 
-      if ((await provider.getNetwork()).chainId != blockchainNetwork) {
-        try {
-          await switchToSelectedNetwork(blockchainNetwork);
-          provider = new ethers.BrowserProvider(window.ethereum);
-        } catch (e) {
-          setErrorMessage((e as Error).message);
-          return;
-        }
+    try {
+      const currentNetwork = (await provider.getNetwork()).chainId;
+
+      if (currentNetwork != selectedNetwork) {
+        await switchToSelectedNetwork(selectedNetwork);
       }
 
+      const newProvider = new ethers.BrowserProvider(window.ethereum);
+      setProvider(newProvider);
+
+      const network = await newProvider?.getNetwork();
+      setProviderNetworkName(network?.name);
+      setProviderChainId(network.chainId);
+
       const accounts = await provider.send("eth_requestAccounts", []);
-      const account = accounts[0];
-      setProvider(provider);
-      setAccount(account);
-    } else {
-      setErrorMessage("Please Install Browser Wallet (e.g. Metamask).");
+      setAccount(accounts[0]);
+    } catch (error) {
+      setErrorMessage((error as Error).message);
     }
   };
 
@@ -138,6 +207,11 @@ const App = () => {
           {account
             ? account.slice(0, 5) + "..." + account.slice(-5)
             : "Connect Wallet"}
+          {account && (
+            <>
+              <br />({providerNetworkName})
+            </>
+          )}
         </Button>
       </div>
 
@@ -149,9 +223,11 @@ const App = () => {
           element={
             <MainCard
               provider={provider}
-              blockchainNetwork={blockchainNetwork}
-              setBlockchainNetwork={setBlockchainNetwork}
-              clearWalletConnection={clearWalletConnection}
+              blockchainNetwork={selectedNetwork}
+              providerNetworkName={providerNetworkName}
+              providerChainId={providerChainId}
+              setSelectedNetwork={setSelectedNetwork}
+              clearAccountConnection={clearAccountConnection}
             />
           }
         />

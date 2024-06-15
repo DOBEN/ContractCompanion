@@ -446,6 +446,11 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@metamask/etherscan-link@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@metamask/etherscan-link/-/etherscan-link-3.0.0.tgz#264610dff793c1d1da30814a48612d69d5f59d02"
+  integrity sha512-JSHrHRTKX/ZqCgxpiVN4jYVkamHCKdAz7+CFPMPgEen57+pYASg/gbEd8WEFmyrmh+OnQXdkBJB23tGdkdxBkQ==
+
 "@noble/curves@1.2.0":
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@noble/curves/-/curves-1.2.0.tgz#92d7e12e4e49b23105a2555c6984d41733d65c35"

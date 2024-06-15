@@ -4,8 +4,9 @@
 
 ## How It Works
 
-You can use the front to interact with any contract on the Sepolia network - reading and writing. You don't need to have access to the ABI or source code to do so just provide the contract address.
-The front end extracts function selectors and input parameter types from the Ethereum Virtual Machine (EVM) bytecode, even for unverified contracts. If the signature is known (e.g. via lookups in the [database](https://www.4byte.directory)), it even displays the matching human-readable names of the functions. In addition, the front end decodes the return parameter types when reading data from a smart contract by analyzing the returned raw bytes.
+You can use the front to interact with any contract on an EVM blockchain network - reading and writing. You don't need to have access to the ABI or source code to do so just provide the contract address or raw bytecode.
+The front end extracts function selectors and input parameter types from the Ethereum Virtual Machine (EVM) bytecode, even for unverified contracts. If the signature is known (e.g. via lookups in the [database](https://docs.openchain.xyz/)), it even displays the matching human-readable names of the functions. In addition, the front end decodes the return parameter types when reading data from a smart contract by analyzing the returned raw bytes.
+The front end can then display the return parameter in a structural human-readable manner.
 
 ## Commands
 

@@ -35,17 +35,21 @@ export type OptionType = { label: string; value: bigint };
 // Available options for the blockchain network.
 export const ETHEREUM = { label: "Ethereum", value: 1n };
 export const SEPOLIA = { label: "Sepolia (testnet)", value: 11155111n };
-// export const INJECTED = { label: 'Injected Network (by wallet)', value: -1 };
+// Value '-1n' is used to signal that the network is injected by the wallet.
+export const INJECTED = { label: "Injected Network (by wallet)", value: -1n };
 
 // All available blockchain network options.
-export const NETWORK_OPTIONS: OptionType[] = [
-  ETHEREUM,
-  SEPOLIA,
-  // INJECTED
-];
+export const NETWORK_OPTIONS: OptionType[] = [ETHEREUM, SEPOLIA, INJECTED];
 
 // Helper function to find the blockchain network name by value.
 export const getNetworkName = (value: bigint | undefined) => {
+  // '-1n` is used to signal that the network is injected by the wallet.
+  if (value !== -1n) {
+    throw Error(
+      "Network name is not hardcoded for this 'Injected network (by wallet)'.",
+    );
+  }
+
   return findOption(value)?.label;
 };
 

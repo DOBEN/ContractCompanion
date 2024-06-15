@@ -4,13 +4,12 @@ import { Alert, Button, Form } from "react-bootstrap";
 import Switch from "react-switch";
 import Select, { SingleValue } from "react-select";
 
-import { BrowserProvider, EtherscanProvider as Provider } from "ethers";
+import { BrowserProvider, EtherscanProvider } from "ethers";
 import { functionArguments, functionSelectors } from "evmole";
 
 import {
   NETWORK_OPTIONS,
   findOption,
-  getNetworkName,
   OptionType,
   validateAddress,
   validateByteCode,
@@ -20,8 +19,10 @@ import { ReadWriteRow } from "./ReadWriteRow";
 interface Props {
   provider: BrowserProvider | undefined;
   blockchainNetwork: bigint | undefined;
-  setBlockchainNetwork: (network: bigint | undefined) => void;
-  clearWalletConnection: () => void;
+  providerNetworkName: string | undefined;
+  providerChainId: bigint | undefined;
+  setSelectedNetwork: (network: bigint | undefined) => void;
+  clearAccountConnection: () => void;
 }
 
 interface FunctionInterface {
@@ -35,8 +36,10 @@ export function MainCard(props: Props) {
   const {
     provider,
     blockchainNetwork,
-    setBlockchainNetwork,
-    clearWalletConnection,
+    providerNetworkName,
+    providerChainId,
+    setSelectedNetwork,
+    clearAccountConnection,
   } = props;
 
   type FormType = {
@@ -93,23 +96,31 @@ export function MainCard(props: Props) {
         throw Error(`'Contract Address' input field is undefined`);
       }
 
-      if (!blockchainNetwork) {
+      if (!providerChainId) {
         setError(`Select 'Blockchain Network' in the drop down`);
         throw Error(`Select 'Blockchain Network' in the drop down`);
       }
 
-      byteCode = await new Provider(blockchainNetwork).getCode(
-        deriveFromContractAddress,
-      );
-
-      const networkName = getNetworkName(blockchainNetwork);
+      try {
+        byteCode = await new EtherscanProvider(providerChainId).getCode(
+          deriveFromContractAddress,
+        );
+      } catch (error) {
+        const err = error as Error;
+        setError(
+          `Provide the "Deployed ByteCode" instead because EtherScan does not support this network: ${err.message}.`,
+        );
+        throw new Error(
+          `Provide the "Deployed ByteCode" instead because EtherScan does not support this network: ${err.message}.`,
+        );
+      }
 
       if (byteCode === "0x") {
         setError(
-          `No bytecode at this address. This is not a contract address on the "${networkName}" network.`,
+          `No bytecode at this address. This is not a contract address on the "${providerNetworkName}" network.`,
         );
         throw Error(
-          `No bytecode at this address. This is not a contract address on the "${networkName}" network.`,
+          `No bytecode at this address. This is not a contract address on the "${providerNetworkName}" network.`,
         );
       }
     } else {
@@ -239,8 +250,8 @@ export function MainCard(props: Props) {
               options={NETWORK_OPTIONS}
               value={findOption(blockchainNetwork)}
               onChange={(selectedOption: SingleValue<OptionType>) => {
-                clearWalletConnection();
-                setBlockchainNetwork(selectedOption?.value);
+                clearAccountConnection();
+                setSelectedNetwork(selectedOption?.value);
               }}
             />
             <Form.Text />
@@ -407,7 +418,7 @@ export function MainCard(props: Props) {
                       min: 0,
                     })}
                     type="number"
-                    placeholder="0"
+                    placeholder="3000000"
                   />
                   {formState.errors.gasLimit && (
                     <Alert variant="info">
@@ -433,6 +444,7 @@ export function MainCard(props: Props) {
                   deriveFromChain={deriveFromChain}
                   valueInWEI={valueInWEI}
                   gasLimit={gasLimit}
+                  providerChainId={providerChainId}
                 />
               );
             })}
