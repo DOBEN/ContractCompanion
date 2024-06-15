@@ -17,12 +17,14 @@ import {
 import { ReadWriteRow } from "./ReadWriteRow";
 
 interface Props {
+  account: string | undefined;
   provider: BrowserProvider | undefined;
   blockchainNetwork: bigint | undefined;
   providerNetworkName: string | undefined;
   providerChainId: bigint | undefined;
   setSelectedNetwork: (network: bigint | undefined) => void;
-  clearAccountConnection: () => void;
+  selectedNetwork: bigint | undefined;
+  clearWalletConnection: () => void;
 }
 
 interface FunctionInterface {
@@ -34,12 +36,14 @@ interface FunctionInterface {
 
 export function MainCard(props: Props) {
   const {
+    account,
     provider,
     blockchainNetwork,
     providerNetworkName,
     providerChainId,
+    selectedNetwork,
     setSelectedNetwork,
-    clearAccountConnection,
+    clearWalletConnection,
   } = props;
 
   type FormType = {
@@ -96,13 +100,25 @@ export function MainCard(props: Props) {
         throw Error(`'Contract Address' input field is undefined`);
       }
 
-      if (!providerChainId) {
+      if (!providerChainId || !selectedNetwork) {
         setError(`Select 'Blockchain Network' in the drop down`);
         throw Error(`Select 'Blockchain Network' in the drop down`);
       }
 
+      // If wallet is not connected then use the selected network, otherwise use the network from the wallet.
+      const effectiveNetwork = account ? providerChainId : selectedNetwork;
+
+      if (effectiveNetwork === -1n) {
+        setError(
+          `If you want to use the injected network from the wallet, then connect your wallet first.`,
+        );
+        throw new Error(
+          `If you want to use the injected network from the wallet, then connect your wallet first.`,
+        );
+      }
+
       try {
-        byteCode = await new EtherscanProvider(providerChainId).getCode(
+        byteCode = await new EtherscanProvider(effectiveNetwork).getCode(
           deriveFromContractAddress,
         );
       } catch (error) {
@@ -250,7 +266,7 @@ export function MainCard(props: Props) {
               options={NETWORK_OPTIONS}
               value={findOption(blockchainNetwork)}
               onChange={(selectedOption: SingleValue<OptionType>) => {
-                clearAccountConnection();
+                clearWalletConnection();
                 setSelectedNetwork(selectedOption?.value);
               }}
             />
@@ -435,6 +451,7 @@ export function MainCard(props: Props) {
               return (
                 <ReadWriteRow
                   key={position}
+                  account={account}
                   provider={provider}
                   contractAddress={contractAddress}
                   functionHash={element.functionHash}

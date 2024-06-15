@@ -15,6 +15,7 @@ const ETHEREUM_WORD_SIZE = 64; // 32 bytes = 64 hex characters
 const abiCoder = new ethers.AbiCoder();
 
 interface Props {
+  account: string | undefined;
   functionHash: string;
   contractAddress: string | undefined;
   provider: BrowserProvider | undefined;
@@ -76,6 +77,7 @@ function parseReturnParameter(
 
 export function ReadWriteRow(props: Props) {
   const {
+    account,
     functionHash,
     contractAddress,
     provider,
@@ -129,7 +131,7 @@ export function ReadWriteRow(props: Props) {
       throw Error(`'inputParameter' input field is undefined`);
     }
 
-    if (!provider) {
+    if (!account || !provider) {
       setError(`Connect Your Browser Wallet`);
       throw Error(`Connect Your Browser Wallet`);
     }
@@ -165,6 +167,13 @@ export function ReadWriteRow(props: Props) {
       };
 
       const signer = await provider.getSigner();
+
+      // This should never happen, but just in case.
+      if (signer.address.toLowerCase() !== account.toLowerCase()) {
+        setError("Signer address does not match the connected account.");
+        return;
+      }
+
       const txResponse = await signer.sendTransaction(transaction);
 
       const txHash = txResponse.hash;
@@ -195,7 +204,7 @@ export function ReadWriteRow(props: Props) {
       throw Error(`'inputParameter' input field is undefined`);
     }
 
-    if (!provider) {
+    if (!account || !provider) {
       setError(`Connect Your Browser Wallet`);
       throw Error(`Connect Your Browser Wallet`);
     }

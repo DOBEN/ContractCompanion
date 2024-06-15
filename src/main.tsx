@@ -123,8 +123,9 @@ const App = () => {
     };
   }, [selectedNetwork]);
 
-  const clearAccountConnection = async () => {
+  const clearWalletConnection = async () => {
     setAccount(undefined);
+    setProvider(undefined);
   };
 
   const connectWalletHandler = async () => {
@@ -227,7 +228,9 @@ const App = () => {
               providerNetworkName={providerNetworkName}
               providerChainId={providerChainId}
               setSelectedNetwork={setSelectedNetwork}
-              clearAccountConnection={clearAccountConnection}
+              selectedNetwork={selectedNetwork}
+              clearWalletConnection={clearWalletConnection}
+              account={account}
             />
           }
         />
