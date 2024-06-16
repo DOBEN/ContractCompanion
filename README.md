@@ -77,3 +77,23 @@ While Solidity remains the predominant language for deployed contracts, the Ethe
 - _Raw bytecode_
   - e.g. [MIMC_sponge hash function contract](https://etherscan.io/address/0x83584f83f26af4edda9cbe8c730bc87c364b28fe#code). It contains the implementation of the zk-friendly hash function of the Tornado cash protocol.
   - e.g. [Huff contract](https://sepolia.etherscan.io/address/0x2e98D76982FB23a4c669bF4eBBeA8f7aDEaB76b5). It was written using the [Huff language](https://docs.huff.sh/).
+
+## Examples
+
+Summary of recordings showcasing the capabilities of the `ContractCompanion` tool.
+
+### Example 1 (Loading ABI interface)
+
+Without connecting a wallet, you can derive the ABI interface from an address (or from raw bytecode)
+from a predefined network (e.g. EthereumMainnet or SepoliaTestnet).
+
+The recording shows the loading of the UNISWAP factory (0xB7f907f7A9eBC822a80BD25E224be42Ce0A698A0) interface on Sepolia.
+After connecting the wallet, the number of pairs, and the address of the first pair are read from the factory. The input parameter types and the return parameter types are decoded by the tool based on the deployed EVM bytecode on-chain.
+
+![Example_1](./gifs/derivingABI.gif)
+
+### Example 3 (Proxy-Implementation Pattern)
+
+The recording shows the loading of a proxy-implementation pattern (`Counter` smart contract) on Sepolia. The counter value is incremented and read from the contract state.
+
+![Example_3](./gifs/proxyImplementation.gif)
