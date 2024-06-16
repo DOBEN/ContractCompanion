@@ -82,18 +82,45 @@ While Solidity remains the predominant language for deployed contracts, the Ethe
 
 Summary of recordings showcasing the capabilities of the `ContractCompanion` tool.
 
-### Example 1 (Loading ABI interface)
+### Example 1 (Loading the ABI interface from an address)
 
-Without connecting a wallet, you can derive the ABI interface from an address (or from raw bytecode)
+Without connecting a wallet, you can derive the ABI interface from an address (or from its deployed bytecode)
 from a predefined network (e.g. EthereumMainnet or SepoliaTestnet).
 
 The recording shows the loading of the UNISWAP factory (0xB7f907f7A9eBC822a80BD25E224be42Ce0A698A0) interface on Sepolia.
 After connecting the wallet, the number of pairs, and the address of the first pair are read from the factory. The input parameter types and the return parameter types are decoded by the tool based on the deployed EVM bytecode on-chain.
 
-![Example_1](./gifs/derivingABI.gif)
+![Example_1](./gifs/derivingABIFromAddress.gif)
+
+### Example 2 (Loading the ABI interface from deployed bytecode)
+
+Without connecting a wallet, you can derive the ABI interface from deployed bytecode for any other EVM network.
+
+The recording shows the loading of a ``Counter`` smart contract interface on Amoy given the deployed bytecode.
+After connecting the wallet, the counter value is incremented and read from the contract state.
+
+![Example_2](./gifs/derivingABIFromBytecode.gif)
 
 ### Example 3 (Proxy-Implementation Pattern)
 
-The recording shows the loading of a proxy-implementation pattern (`Counter` smart contract) on Sepolia. The counter value is incremented and read from the contract state.
+The recording shows the loading of a proxy-implementation pattern (``Counter`` smart contract) on Sepolia. The counter value is incremented and read from the contract state.
 
 ![Example_3](./gifs/proxyImplementation.gif)
+
+### Example 4 (Writing to chain with `value` and `gasLimit`)
+
+The recording shows how to send ETH when writing to the chain and how to set the ``gasLimit``.
+
+![Example_4](./gifs/sendETH.gif)
+
+### Example 5 (Reading from chain)
+
+The recording shows the decoding of the return parameter from a complex smart contract.
+
+![Example_5](./gifs/redingFromComplexSmartContract.gif)
+
+### Example 6 (Reading from chain by fine-tuning the inferred types)
+
+The recording shows how the decoding of the return parameter can be manually fine-tuned.
+
+![Example_6](./gifs/fineTuningInferredTypes.gif)
