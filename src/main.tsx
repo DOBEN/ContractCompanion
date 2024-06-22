@@ -225,7 +225,6 @@ const App = () => {
             <MainCard
               provider={provider}
               blockchainNetwork={selectedNetwork}
-              providerNetworkName={providerNetworkName}
               providerChainId={providerChainId}
               setSelectedNetwork={setSelectedNetwork}
               selectedNetwork={selectedNetwork}

@@ -20,7 +20,6 @@ interface Props {
   account: string | undefined;
   provider: BrowserProvider | undefined;
   blockchainNetwork: bigint | undefined;
-  providerNetworkName: string | undefined;
   providerChainId: bigint | undefined;
   setSelectedNetwork: (network: bigint | undefined) => void;
   selectedNetwork: bigint | undefined;
@@ -39,7 +38,6 @@ export function MainCard(props: Props) {
     account,
     provider,
     blockchainNetwork,
-    providerNetworkName,
     providerChainId,
     selectedNetwork,
     setSelectedNetwork,
@@ -133,10 +131,10 @@ export function MainCard(props: Props) {
 
       if (byteCode === "0x") {
         setError(
-          `No bytecode at this address. This is not a contract address on the "${providerNetworkName}" network.`,
+          `No bytecode at this address. This is not a contract address on the "${effectiveNetwork}" network.`,
         );
         throw Error(
-          `No bytecode at this address. This is not a contract address on the "${providerNetworkName}" network.`,
+          `No bytecode at this address. This is not a contract address on the "${effectiveNetwork}" network.`,
         );
       }
     } else {
