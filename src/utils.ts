@@ -4,6 +4,14 @@ const addressRegex = /^0x[0-9a-fA-F]{40}$/;
 // Regular expression pattern to match a hex string
 const hexRegex = /^0x[0-9a-fA-F]*$/;
 
+export interface FunctionInterface {
+  databaseLookUpArray: string[];
+  functionHash: string;
+  inputParameterTypeArray: string[];
+  perfectMatchName: string | undefined;
+  mutability: string;
+}
+
 /**
  * This function validates if a string represents a valid Ethereum address in hex encoding with an "0x" prefix.
  * The length, and the characters are validated.

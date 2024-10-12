@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { Alert, Button, Form } from "react-bootstrap";
 import Switch from "react-switch";
@@ -9,6 +9,7 @@ import { BrowserProvider, ethers } from "ethers";
 import { ParamType } from "ethers/abi";
 
 import { TxHashLink } from "./EtherScanTxLink";
+import { FunctionInterface } from "../utils";
 
 const ETHEREUM_WORD_SIZE = 64; // 32 bytes = 64 hex characters
 
@@ -16,16 +17,14 @@ const abiCoder = new ethers.AbiCoder();
 
 interface Props {
   account: string | undefined;
-  functionHash: string;
   contractAddress: string | undefined;
   provider: BrowserProvider | undefined;
-  perfectMatchName: string | undefined;
-  inputParameterTypeArray: string[];
   deriveFromContractAddress: string | undefined;
   valueInWEI: number | undefined;
   gasLimit: number | undefined;
   deriveFromChain: boolean;
   providerChainId: bigint | undefined;
+  functionInterface: FunctionInterface;
 }
 
 function parseInputParameter(
@@ -78,16 +77,14 @@ function parseReturnParameter(
 export function ReadWriteRow(props: Props) {
   const {
     account,
-    functionHash,
     contractAddress,
     provider,
-    perfectMatchName,
-    inputParameterTypeArray,
     valueInWEI,
     gasLimit,
     deriveFromContractAddress,
     deriveFromChain,
     providerChainId,
+    functionInterface,
   } = props;
 
   type FormType = {
@@ -116,6 +113,14 @@ export function ReadWriteRow(props: Props) {
     string | undefined
   >(undefined);
 
+  useEffect(() => {
+    // If mutability is `read`, set the switch accordingly.
+    // If mutability is `write`, set the switch accordingly.
+    functionInterface.mutability.slice(0, 4) === "Read"
+      ? setValue("shouldWrite", false)
+      : setValue("shouldWrite", true);
+  });
+
   async function onSubmitWrite() {
     setError(undefined);
     setTxHash(undefined);
@@ -125,7 +130,7 @@ export function ReadWriteRow(props: Props) {
     if (
       inputParameter &&
       inputParameter.length === 0 &&
-      inputParameterTypeArray.length > 0
+      functionInterface.inputParameterTypeArray.length > 0
     ) {
       setError(`Set Input Parameter`);
       throw Error(`'inputParameter' input field is undefined`);
@@ -152,7 +157,7 @@ export function ReadWriteRow(props: Props) {
     try {
       const inputParameterABIEncoded = parseInputParameter(
         inputParameter,
-        inputParameterTypeArray,
+        functionInterface.inputParameterTypeArray,
       );
 
       // Create transaction
@@ -160,7 +165,7 @@ export function ReadWriteRow(props: Props) {
         // If `contractAddress (e.g. a proxyAddress)` is set, we send the request to this address instead of the `deriveFromContractAddress`.
         to: contractAddress ? contractAddress : deriveFromContractAddress,
         data:
-          functionHash +
+          functionInterface.functionHash +
           (inputParameterABIEncoded ? inputParameterABIEncoded : ""),
         value: valueInWEI ? valueInWEI : 0,
         gasLimit: gasLimit ? gasLimit : 3000000,
@@ -198,7 +203,7 @@ export function ReadWriteRow(props: Props) {
     if (
       inputParameter &&
       inputParameter.length === 0 &&
-      inputParameterTypeArray.length > 0
+      functionInterface.inputParameterTypeArray.length > 0
     ) {
       setError(`Set Input Parameter`);
       throw Error(`'inputParameter' input field is undefined`);
@@ -226,7 +231,7 @@ export function ReadWriteRow(props: Props) {
     try {
       const inputParameterABIEncoded = parseInputParameter(
         inputParameter,
-        inputParameterTypeArray,
+        functionInterface.inputParameterTypeArray,
       );
 
       // Create transaction
@@ -234,7 +239,7 @@ export function ReadWriteRow(props: Props) {
         // If `contractAddress (e.g. a proxyAddress)` is set, we send the request to this address instead of the `deriveFromContractAddress`.
         to: contractAddress ? contractAddress : deriveFromContractAddress,
         data:
-          functionHash +
+          functionInterface.functionHash +
           (inputParameterABIEncoded ? inputParameterABIEncoded : ""),
       };
 
@@ -304,8 +309,10 @@ export function ReadWriteRow(props: Props) {
     <>
       <div className="cardFull">
         <Form.Group className="centerItems">
-          {functionHash +
-            (perfectMatchName ? " (" + perfectMatchName + ")" : "")}
+          {functionInterface.functionHash +
+            (functionInterface.perfectMatchName
+              ? " (" + functionInterface.perfectMatchName + ")"
+              : "")}
         </Form.Group>
 
         <Form.Group className="centerItems">
@@ -341,13 +348,13 @@ export function ReadWriteRow(props: Props) {
           {shouldWrite ? "Write" : "Read"}
         </Button>
 
-        {inputParameterTypeArray.length > 0 && (
+        {functionInterface.inputParameterTypeArray.length > 0 && (
           <Form.Group className="col d-flex align-items-center justify-content-center">
             <Form.Control
               {...register("inputParameter", {})}
               placeholder={
                 "Input Parameters: [" +
-                inputParameterTypeArray +
+                functionInterface.inputParameterTypeArray +
                 "] (e.g. for [uint[]] write [[1,2,3]])"
               }
             />

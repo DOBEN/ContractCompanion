@@ -28,7 +28,7 @@ yarn
 yarn build
 ```
 
-- Run `yarn dev` or `yarn preview` to run the front end locally:
+- Run `yarn dev` to run the front end locally:
 
 ```
 yarn dev
@@ -96,20 +96,20 @@ After connecting the wallet, the number of pairs, and the address of the first p
 
 Without connecting a wallet, you can derive the ABI interface from deployed bytecode for any other EVM network.
 
-The recording shows the loading of a ``Counter`` smart contract interface on Amoy given the deployed bytecode.
+The recording shows the loading of a `Counter` smart contract interface on Amoy given the deployed bytecode.
 After connecting the wallet, the counter value is incremented and read from the contract state.
 
 ![Example_2](./gifs/derivingABIFromBytecode.gif)
 
 ### Example 3 (Proxy-Implementation Pattern)
 
-The recording shows the loading of a proxy-implementation pattern (``Counter`` smart contract) on Sepolia. The counter value is incremented and read from the contract state.
+The recording shows the loading of a proxy-implementation pattern (`Counter` smart contract) on Sepolia. The counter value is incremented and read from the contract state.
 
 ![Example_3](./gifs/proxyImplementation.gif)
 
 ### Example 4 (Writing to chain with `value` and `gasLimit`)
 
-The recording shows how to send ETH when writing to the chain and how to set the ``gasLimit``.
+The recording shows how to send ETH when writing to the chain and how to set the `gasLimit`.
 
 ![Example_4](./gifs/sendETH.gif)
 

@@ -5,7 +5,11 @@ import Switch from "react-switch";
 import Select, { SingleValue } from "react-select";
 
 import { BrowserProvider, EtherscanProvider } from "ethers";
-import { functionArguments, functionSelectors } from "evmole";
+import init, {
+  functionSelectors,
+  functionArguments,
+  functionStateMutability,
+} from "evmole/no_tla";
 
 import {
   NETWORK_OPTIONS,
@@ -13,6 +17,7 @@ import {
   OptionType,
   validateAddress,
   validateByteCode,
+  FunctionInterface,
 } from "../utils";
 import { ReadWriteRow } from "./ReadWriteRow";
 
@@ -24,13 +29,6 @@ interface Props {
   setSelectedNetwork: (network: bigint | undefined) => void;
   selectedNetwork: bigint | undefined;
   clearWalletConnection: () => void;
-}
-
-interface FunctionInterface {
-  databaseLookUpArray: string[];
-  functionHash: string;
-  inputParameterTypeArray: string[];
-  perfectMatchName: string | undefined;
 }
 
 export function MainCard(props: Props) {
@@ -145,7 +143,9 @@ export function MainCard(props: Props) {
       byteCode = providedByteCode;
     }
 
-    const list = functionSelectors(byteCode);
+    await init();
+
+    const list = functionSelectors(byteCode, 20000000000); // 20000000000 is the gas limit
 
     if (list.length === 0) {
       setError("Could not find any function selectors in the bytecode.");
@@ -155,7 +155,24 @@ export function MainCard(props: Props) {
     const interfaces: FunctionInterface[] = [];
 
     for (let i = 0; i < list.length; i++) {
-      const argumentsString = functionArguments(byteCode, list[i]);
+      const argumentsString = functionArguments(byteCode, list[i], 20000000000); // 20000000000 is the gas limit
+      // https://docs.rs/alloy-sol-type-parser/latest/alloy_sol_type_parser/enum.StateMutability.html
+      // Pure: Pure functions promise not to read from or modify the state.
+      // View: View functions promise not to modify the state.
+      // NonPayable: Nonpayable functions promise not to receive Ether.
+      //    This is the solidity default: https://docs.soliditylang.org/en/latest/abi-spec.html#json
+      //    The state mutability nonpayable is reflected in Solidity by not specifying a state mutability modifier at all.
+      // Payable: Payable functions make no promises.
+      const mutability = functionStateMutability(
+        byteCode,
+        list[i],
+        20000000000,
+      ); // 20000000000 is the gas limit
+
+      const mutability_extended =
+        mutability === "pure" || mutability === "view"
+          ? "Read(" + mutability + ")"
+          : "Write(" + mutability + ")";
 
       const inputParameters: string[] =
         argumentsString.trim() === ""
@@ -169,6 +186,7 @@ export function MainCard(props: Props) {
         inputParameterTypeArray: inputParameters,
         databaseLookUpArray: [],
         perfectMatchName: undefined,
+        mutability: mutability_extended,
       });
     }
 
@@ -346,6 +364,7 @@ export function MainCard(props: Props) {
                   <tr>
                     <th>Function Hashes</th>
                     <th>Input Parameter Types</th>
+                    <th>Mutability</th>
                     {/* KEPT FOR DEBUGGING */}
                     {/* <th>debug</th> */}
                   </tr>
@@ -364,6 +383,7 @@ export function MainCard(props: Props) {
                               funInterface.inputParameterTypeArray +
                               "]"}
                           </td>
+                          <td>{funInterface.mutability}</td>
                           {/* KEPT FOR DEBUGGING */}
                           {/* <td>
                             {"[" +
@@ -452,9 +472,7 @@ export function MainCard(props: Props) {
                   account={account}
                   provider={provider}
                   contractAddress={contractAddress}
-                  functionHash={element.functionHash}
-                  perfectMatchName={element.perfectMatchName}
-                  inputParameterTypeArray={element.inputParameterTypeArray}
+                  functionInterface={element}
                   deriveFromContractAddress={deriveFromContractAddress}
                   deriveFromChain={deriveFromChain}
                   valueInWEI={valueInWEI}

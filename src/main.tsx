@@ -121,7 +121,7 @@ const App = () => {
         window.ethereum.removeListener("accountsChanged", handleAccountChanged);
       }
     };
-  }, [selectedNetwork]);
+  }, [provider, selectedNetwork]);
 
   const clearWalletConnection = async () => {
     setAccount(undefined);

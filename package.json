@@ -6,19 +6,18 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite preview",
     "build": "tsc && vite build",
     "lint": "eslint .",
     "fmt-check": "prettier --check .",
-    "fmt": "prettier --write .",
-    "preview": "vite preview"
+    "fmt": "prettier --write ."
   },
   "dependencies": {
     "@metamask/etherscan-link": "^3.0.0",
     "@openchainxyz/abi-guesser": "^1.0.2",
     "bootstrap": "^5.3.3",
     "ethers": "^6.11.1",
-    "evmole": "^0.3.3",
+    "evmole": "^0.5.1",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.1",
     "react-dom": "^18.2.0",

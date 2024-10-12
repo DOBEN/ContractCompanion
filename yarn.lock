@@ -1588,10 +1588,10 @@ ethers@^6.11.1:
     tslib "2.4.0"
     ws "8.5.0"
 
-evmole@^0.3.3:
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/evmole/-/evmole-0.3.3.tgz#7d7f7df728b84127fdaf936952be8f87092f81da"
-  integrity sha512-NHgKqRAvv2aAkRVxtTUvd1ONf+WQvnTfu0kErAXxwyw/3Az4rIyk8JuuBsSvo7I0wMlqVa6yLQ3Rs5mB4E6Adg==
+evmole@^0.5.1:
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/evmole/-/evmole-0.5.1.tgz#23f26a629d01079ef5f83189dba1374de95af5f8"
+  integrity sha512-6al+Ju+s5Fm5sDYhz3Udlbx88uKQUASlIQlkZeeNQCLzNtUUPyoFkj+SShoHYqUFgA80X8yv/hNK2NVEr7YNOQ==
 
 fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
   version "3.1.3"
