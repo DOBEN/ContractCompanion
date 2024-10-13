@@ -5,11 +5,11 @@ import Switch from "react-switch";
 import Select, { SingleValue } from "react-select";
 
 import { BrowserProvider, EtherscanProvider } from "ethers";
-import init, {
+import {
   functionSelectors,
   functionArguments,
   functionStateMutability,
-} from "evmole/no_tla";
+} from "evmole";
 
 import {
   NETWORK_OPTIONS,
@@ -142,8 +142,6 @@ export function MainCard(props: Props) {
       }
       byteCode = providedByteCode;
     }
-
-    await init();
 
     const list = functionSelectors(byteCode, 20000000000); // 20000000000 is the gas limit
 

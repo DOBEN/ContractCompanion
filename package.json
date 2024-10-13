@@ -6,11 +6,12 @@
   "version": "1.2.0",
   "type": "module",
   "scripts": {
-    "dev": "vite preview",
+    "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint .",
     "fmt-check": "prettier --check .",
-    "fmt": "prettier --write ."
+    "fmt": "prettier --write .",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@metamask/etherscan-link": "^3.0.0",

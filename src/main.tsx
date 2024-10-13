@@ -121,7 +121,8 @@ const App = () => {
         window.ethereum.removeListener("accountsChanged", handleAccountChanged);
       }
     };
-  }, [provider, selectedNetwork]);
+    // Note: Don't include `provider` since it will trigger the useEffect on every render in `yarn dev` mode.
+  }, [selectedNetwork]);
 
   const clearWalletConnection = async () => {
     setAccount(undefined);

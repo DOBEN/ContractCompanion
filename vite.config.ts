@@ -6,6 +6,7 @@ export default defineConfig({
     "process.env": {},
   },
   build: {
+    target: 'esnext',
     rollupOptions: {
       /**
        * Ignore "use client" waning since we are not using SSR
@@ -21,5 +22,8 @@ export default defineConfig({
         warn(warning);
       },
     },
+  },
+  optimizeDeps: { // https://github.com/vitejs/vite/issues/13756
+    exclude: ['evmole'],
   },
 });
