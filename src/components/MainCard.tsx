@@ -223,32 +223,48 @@ export function MainCard(props: Props) {
             const potentialFunctions =
               abi.result.function[functionInterface.functionHash] || [];
 
+            // The `potentialFunctions` is ordered by the likelihood of occurrence.
+            // If an input parameter matches perfectly with the one extracted
+            // from the bytecode, use the first matching function, even if
+            // there's another perfect match later. For example, for the function
+            // selector 0x70a08231 from ERC20, there are two perfect matches
+            // (second and fourth rows). The `alreadyFoundPerfectMatch` flag ensures
+            // that we select the first row (most likely occurrence):
+            // 1: {name: 'balanceOf(address)', filtered: false}
+            // 2: {name: 'branch_passphrase_public(uint256,bytes8)', filtered: true}
+            // 3: {name: 'passphrase_calculate_transfer(uint64,address)', filtered: true}
+            // 4: {name: '$_$$$_$$$$$_$_$____$$$$_$$_$__(address)', filtered: true}
+            let alreadyFoundPerfectMatch = false;
+
             potentialFunctions.forEach(
               (potentialFunction: { name: string }) => {
-                // Find perfect name and input parameter match
-                const regex = /\((.*?)\)/;
-                const matches = potentialFunction.name.match(regex);
+                if (!alreadyFoundPerfectMatch) {
+                  // Find perfect name and input parameter match
+                  const regex = /\((.*?)\)/;
+                  const matches = potentialFunction.name.match(regex);
 
-                // Get input parameter types
-                if (matches && matches.length > 1) {
-                  const parametersString = matches[1];
-                  const parameters =
-                    parametersString.trim() === ""
-                      ? []
-                      : parametersString
-                          .split(",")
-                          .map((param) => param.trim());
+                  // Get input parameter types
+                  if (matches && matches.length > 1) {
+                    const parametersString = matches[1];
+                    const parameters =
+                      parametersString.trim() === ""
+                        ? []
+                        : parametersString
+                            .split(",")
+                            .map((param) => param.trim());
 
-                  // If we find a function name where the input parameter perfectly matches the extracted input parameter from the bytecode.
-                  // Mark this as the perfect match. We know this is the correct function name for sure.
-                  if (
-                    JSON.stringify(parameters) ===
-                    JSON.stringify(functionInterface.inputParameterTypeArray)
-                  ) {
-                    const functionName = potentialFunction.name
-                      .substring(0, potentialFunction.name.indexOf("("))
-                      .trim();
-                    functionInterface.perfectMatchName = functionName;
+                    // If we find a function name where the input parameter perfectly matches the extracted input parameter from the bytecode.
+                    // Mark this as the perfect match. We know this is the correct function name for sure.
+                    if (
+                      JSON.stringify(parameters) ===
+                      JSON.stringify(functionInterface.inputParameterTypeArray)
+                    ) {
+                      const functionName = potentialFunction.name
+                        .substring(0, potentialFunction.name.indexOf("("))
+                        .trim();
+                      functionInterface.perfectMatchName = functionName;
+                      alreadyFoundPerfectMatch = true;
+                    }
                   }
                 }
               },
