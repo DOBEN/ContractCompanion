@@ -113,10 +113,17 @@ export function MainCard(props: Props) {
         );
       }
 
+      const apiKey = import.meta.env.VITE_PUBLIC_ETHERSCAN_API_KEY;
+
+      if (!apiKey) {
+        console.error("VITE_PUBLIC_ETHERSCAN_API_KEY is not defined.");
+      }
+
       try {
-        byteCode = await new EtherscanProvider(effectiveNetwork).getCode(
-          deriveFromContractAddress,
-        );
+        byteCode = await new EtherscanProvider(
+          effectiveNetwork,
+          apiKey,
+        ).getCode(deriveFromContractAddress);
       } catch (error) {
         const err = error as Error;
         setError(

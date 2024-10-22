@@ -20,6 +20,8 @@ ContractCompanion utilizes `evMole` to address problem 1 and `abi-guesser` for p
 for interacting with any contract on an EVM-based blockchain, enabling both reading and writing operations.
 You don’t need access to the ABI or source code — just provide the contract address or raw bytecode.
 
+Note: The front-end supports browser wallets (no mobile wallets).
+
 The technical details are:
 
 The front-end extracts the function selectors and the input parameter types from the EVM bytecode, even for unverified contracts. If a signature is recognized (e.g., through lookups in the [database](https://docs.openchain.xyz/)), it displays the corresponding human-readable function names. Additionally, when reading data from a contract, the front-end analyzes the returned raw bytes to decode and present return parameters in a structured, human-readable format.
@@ -129,6 +131,10 @@ The recording shows how the decoding of the return parameter can be manually fin
 ```
 git clone https://github.com/DOBEN/ContractCompanion.git
 ```
+
+- Set up `EtherScan API` key:
+
+Rename `.env_example` file to `.env` and insert your [EtherScan API key](https://docs.etherscan.io/getting-started/viewing-api-usage-statistics)
 
 - Run `yarn` to install dependencies in the root folder of this project:
 

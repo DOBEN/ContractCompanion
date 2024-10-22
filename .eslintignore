@@ -1,4 +1,5 @@
 .eslintrc.cjs
 .yarn/
+.env_example
 node_modules/
 dist/
