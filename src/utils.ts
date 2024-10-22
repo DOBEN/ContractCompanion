@@ -8,7 +8,17 @@ export interface FunctionInterface {
   databaseLookUpArray: string[];
   functionHash: string;
   inputParameterTypeArray: string[];
-  perfectMatchName: string | undefined;
+  // The `perfectMatchNames` is ordered by the likelihood of occurrence.
+  // Meaning there can be several perfect matches but the match at position `0`
+  // is most likely.
+  perfectMatchNames: string[];
+  // https://docs.rs/alloy-sol-type-parser/latest/alloy_sol_type_parser/enum.StateMutability.html
+  // Pure: Pure functions promise not to read from or modify the state.
+  // View: View functions promise not to modify the state.
+  // NonPayable: Nonpayable functions promise not to receive Ether.
+  //    This is the solidity default: https://docs.soliditylang.org/en/latest/abi-spec.html#json
+  //    The state mutability nonpayable is reflected in Solidity by not specifying a state mutability modifier at all.
+  // Payable: Payable functions make no promises.
   mutability: string;
 }
 

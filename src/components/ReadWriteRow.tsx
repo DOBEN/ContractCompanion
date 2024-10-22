@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { Alert, Button, Form } from "react-bootstrap";
 import Switch from "react-switch";
@@ -113,13 +113,18 @@ export function ReadWriteRow(props: Props) {
     string | undefined
   >(undefined);
 
-  useEffect(() => {
+  const handleSetValue = useCallback(() => {
     // If mutability is `read`, set the switch accordingly.
     // If mutability is `write`, set the switch accordingly.
-    functionInterface.mutability.slice(0, 4) === "Read"
-      ? setValue("shouldWrite", false)
-      : setValue("shouldWrite", true);
-  });
+    setValue(
+      "shouldWrite",
+      functionInterface?.mutability.slice(0, 4) === "Read" ? false : true,
+    );
+  }, [functionInterface, setValue]);
+
+  useEffect(() => {
+    handleSetValue();
+  }, [handleSetValue]);
 
   async function onSubmitWrite() {
     setError(undefined);
@@ -310,8 +315,9 @@ export function ReadWriteRow(props: Props) {
       <div className="cardFull">
         <Form.Group className="centerItems">
           {functionInterface.functionHash +
-            (functionInterface.perfectMatchName
-              ? " (" + functionInterface.perfectMatchName + ")"
+            // The perfect match at position `0` in the array is the most likely occurrence and displayed here.
+            (functionInterface.perfectMatchNames[0]
+              ? " (" + functionInterface.perfectMatchNames[0] + ")"
               : "")}
         </Form.Group>
 

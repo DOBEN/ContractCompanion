@@ -183,7 +183,7 @@ export function MainCard(props: Props) {
         functionHash: "0x" + list[i],
         inputParameterTypeArray: inputParameters,
         databaseLookUpArray: [],
-        perfectMatchName: undefined,
+        perfectMatchNames: [],
         mutability: mutability_extended,
       });
     }
@@ -223,48 +223,44 @@ export function MainCard(props: Props) {
             const potentialFunctions =
               abi.result.function[functionInterface.functionHash] || [];
 
-            // The `potentialFunctions` is ordered by the likelihood of occurrence.
-            // If an input parameter matches perfectly with the one extracted
-            // from the bytecode, use the first matching function, even if
-            // there's another perfect match later. For example, for the function
-            // selector 0x70a08231 from ERC20, there are two perfect matches
-            // (second and fourth rows). The `alreadyFoundPerfectMatch` flag ensures
-            // that we select the first row (most likely occurrence):
-            // 1: {name: 'balanceOf(address)', filtered: false}
-            // 2: {name: 'branch_passphrase_public(uint256,bytes8)', filtered: true}
-            // 3: {name: 'passphrase_calculate_transfer(uint64,address)', filtered: true}
-            // 4: {name: '$_$$$_$$$$$_$_$____$$$$_$$_$__(address)', filtered: true}
-            let alreadyFoundPerfectMatch = false;
-
             potentialFunctions.forEach(
               (potentialFunction: { name: string }) => {
-                if (!alreadyFoundPerfectMatch) {
-                  // Find perfect name and input parameter match
-                  const regex = /\((.*?)\)/;
-                  const matches = potentialFunction.name.match(regex);
+                // Find perfect name and input parameter match
+                const regex = /\((.*?)\)/;
+                const matches = potentialFunction.name.match(regex);
 
-                  // Get input parameter types
-                  if (matches && matches.length > 1) {
-                    const parametersString = matches[1];
-                    const parameters =
-                      parametersString.trim() === ""
-                        ? []
-                        : parametersString
-                            .split(",")
-                            .map((param) => param.trim());
+                // Get input parameter types
+                if (matches && matches.length > 1) {
+                  const parametersString = matches[1];
+                  const parameters =
+                    parametersString.trim() === ""
+                      ? []
+                      : parametersString
+                          .split(",")
+                          .map((param) => param.trim());
 
-                    // If we find a function name where the input parameter perfectly matches the extracted input parameter from the bytecode.
-                    // Mark this as the perfect match. We know this is the correct function name for sure.
-                    if (
-                      JSON.stringify(parameters) ===
-                      JSON.stringify(functionInterface.inputParameterTypeArray)
-                    ) {
-                      const functionName = potentialFunction.name
-                        .substring(0, potentialFunction.name.indexOf("("))
-                        .trim();
-                      functionInterface.perfectMatchName = functionName;
-                      alreadyFoundPerfectMatch = true;
-                    }
+                  // If we find a function name where the input parameter perfectly matches the extracted input parameter from the bytecode.
+                  // Mark this as the perfect match. We know this is the correct function name for sure.
+                  if (
+                    JSON.stringify(parameters) ===
+                    JSON.stringify(functionInterface.inputParameterTypeArray)
+                  ) {
+                    const functionName = potentialFunction.name
+                      .substring(0, potentialFunction.name.indexOf("("))
+                      .trim();
+                    // The `potentialFunctions` is ordered by the likelihood of occurrence.
+                    // As such the `perfectMatchNames` will be ordered by the likelihood of occurrence here.
+                    // Meaning there can be several perfect matches but the name at position `0` in the array is most likely.
+                    // For example, for the ERC20 function selector `0x70a08231`, there are two perfect matches
+                    // in the `potentialFunctions` array (first and fourth row below). The second and third rows are
+                    // not added to the `perfectMatchNames` array because their input parameters don't match perfectly.
+                    //
+                    // Example `0x70a08231`:
+                    // 1: {name: 'balanceOf(address)', filtered: false}
+                    // 2: {name: 'branch_passphrase_public(uint256,bytes8)', filtered: true}
+                    // 3: {name: 'passphrase_calculate_transfer(uint64,address)', filtered: true}
+                    // 4: {name: '$_$$$_$$$$$_$_$____$$$$_$$_$__(address)', filtered: true}
+                    functionInterface.perfectMatchNames.push(functionName);
                   }
                 }
               },
@@ -373,7 +369,9 @@ export function MainCard(props: Props) {
           {functionInterfaces && functionInterfaces.length !== 0 && (
             <>
               <br />
-              <table>
+              <table
+                style={{ borderSpacing: "0 20px", borderCollapse: "separate" }}
+              >
                 <thead>
                   <tr>
                     <th>Function Hashes</th>
@@ -389,14 +387,28 @@ export function MainCard(props: Props) {
                       return (
                         <tr key={parentIndex}>
                           <td>{funInterface.functionHash}</td>
-                          <td>
-                            {(funInterface.perfectMatchName
-                              ? funInterface.perfectMatchName
-                              : "") +
-                              "[" +
-                              funInterface.inputParameterTypeArray +
-                              "]"}
-                          </td>
+
+                          {funInterface.perfectMatchNames.length > 0 && (
+                            <td>
+                              {funInterface.perfectMatchNames.map(
+                                (name: string, index: number) => (
+                                  <div key={index}>
+                                    {name +
+                                      "[" +
+                                      funInterface.inputParameterTypeArray +
+                                      "]"}
+                                  </div>
+                                ),
+                              )}
+                            </td>
+                          )}
+
+                          {/* If we couldn't find a perfect match, then we display the input parameter types only. */}
+                          {funInterface.perfectMatchNames.length == 0 && (
+                            <td>
+                              {"[" + funInterface.inputParameterTypeArray + "]"}
+                            </td>
+                          )}
                           <td>{funInterface.mutability}</td>
                           {/* KEPT FOR DEBUGGING */}
                           {/* <td>
