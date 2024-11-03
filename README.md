@@ -47,12 +47,7 @@ This section summarizes projects that are interesting to check out for decoding 
 - [Heimdall](https://github.com/Jon-Becker/heimdall-rs/tree/main/crates/decode)
 
 ## Next Milestones
-
-- Create issue/PR on `BlockScout` repo -> Integrate into `BlockScout`.
-
-- Talk to `EtherScan` people -> Experimental integration into `EtherScan`.
-
-- REMIX IDE -> [Proof-Of-Concept-Integration](https://github.com/DOBEN/remix-project) -> Get response from REMIX team?
+[Issues](https://github.com/DOBEN/ContractCompanion/issues/2)
 
 ## Who Benefits from ContractCompanion
 
