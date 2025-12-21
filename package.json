@@ -16,11 +16,11 @@
   "dependencies": {
     "@metamask/etherscan-link": "^3.0.0",
     "@openchainxyz/abi-guesser": "^1.0.2",
-    "bootstrap": "^5.3.3",
+    "bootstrap": "^5.3.8",
     "ethers": "^6.11.1",
     "evmole": "^0.5.1",
     "react": "^18.2.0",
-    "react-bootstrap": "^2.10.1",
+    "react-bootstrap": "^2.10.10",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.50.1",
     "react-router-dom": "^6.22.1",
@@ -41,8 +41,9 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "^3.2.5",
-    "sass": "^1.70.0",
+    "sass": "^1.97.1",
     "typescript": "^5.0.2",
-    "vite": "^5.1.1"
-  }
+    "vite": "^7.3.0"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
